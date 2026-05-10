@@ -28,21 +28,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Create loading indicator
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.className = 'nhraa-loading-indicator';
-    loadingIndicator.textContent = 'Thinking...';
-    history.appendChild(loadingIndicator);
+    // Use existing loading indicator
+    const loadingIndicator = document.getElementById('nhraa-loading');
+    if (loadingIndicator) {
+        history.appendChild(loadingIndicator);
+    }
 
     // Character counter
     input.addEventListener('input', function() {
         const len = input.value.length;
         counter.textContent = `${len} / ${MAX_CHARS}`;
         if (len > MAX_CHARS) {
-            counter.style.color = '#d63638';
+            counter.style.color = '#ef4444';
             sendBtn.disabled = true;
         } else {
-            counter.style.color = '#646970';
+            counter.style.color = '#94a3b8';
             sendBtn.disabled = false;
         }
     });
@@ -74,9 +74,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (changeId) {
             const undoBtn = document.createElement('button');
-            undoBtn.className = 'button button-small nhraa-undo-btn';
-            undoBtn.style.marginTop = '10px';
-            undoBtn.textContent = 'Undo';
+            undoBtn.className = 'nhraa-undo-btn';
+            undoBtn.textContent = 'Undo Changes';
             undoBtn.dataset.changeId = changeId;
             
             undoBtn.addEventListener('click', function(e) {
@@ -89,7 +88,11 @@ document.addEventListener('DOMContentLoaded', function() {
         wrapper.appendChild(content);
         
         // Insert before loading indicator
-        history.insertBefore(wrapper, loadingIndicator);
+        if (loadingIndicator) {
+            history.insertBefore(wrapper, loadingIndicator);
+        } else {
+            history.appendChild(wrapper);
+        }
         history.scrollTop = history.scrollHeight;
     }
 
@@ -108,19 +111,20 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                btn.textContent = 'Undone';
-                btn.classList.add('disabled');
+                btn.textContent = 'Changes Undone';
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'default';
                 appendMessage('assistant', data.message);
             } else {
                 btn.disabled = false;
-                btn.textContent = 'Undo';
+                btn.textContent = 'Undo Changes';
                 alert('Undo failed: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
             btn.disabled = false;
-            btn.textContent = 'Undo';
+            btn.textContent = 'Undo Changes';
             alert('Network error. Please try again.');
         });
     }
@@ -138,7 +142,9 @@ document.addEventListener('DOMContentLoaded', function() {
         appendMessage('user', message);
         
         // Show loading
-        loadingIndicator.style.display = 'block';
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'flex';
+        }
         history.scrollTop = history.scrollHeight;
 
         // Send API request
@@ -152,7 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            loadingIndicator.style.display = 'none';
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
             input.disabled = false;
             sendBtn.disabled = false;
             input.focus();
@@ -167,7 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            loadingIndicator.style.display = 'none';
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
             input.disabled = false;
             sendBtn.disabled = false;
             appendMessage('assistant', 'Network error. Please try again.');
