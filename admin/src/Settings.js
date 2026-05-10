@@ -12,21 +12,28 @@ const Field = ({ label, description, children }) => (
 const Settings = () => {
     const [settings, setSettings] = useState({
         nhraa_licence_key: '',
+        nhraa_ai_provider: 'claude',
         nhraa_claude_api_key: '',
+        nhraa_openai_api_key: '',
+        nhraa_gemini_api_key: '',
         nhraa_debug_mode: false,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [notice, setNotice] = useState(null);
     const [clearing, setClearing] = useState(false);
-    const [showKey, setShowKey] = useState(false);
+    const [showKey, setShowKey] = useState({ claude: false, openai: false, gemini: false });
+    const toggleKey = (p) => setShowKey(prev => ({ ...prev, [p]: !prev[p] }));
 
     useEffect(() => {
         apiFetch({ path: '/nhraa/v1/settings' })
             .then(res => {
                 setSettings({
                     nhraa_licence_key: res.nhraa_licence_key || '',
+                    nhraa_ai_provider: res.nhraa_ai_provider || 'claude',
                     nhraa_claude_api_key: res.nhraa_claude_api_key || '',
+                    nhraa_openai_api_key: res.nhraa_openai_api_key || '',
+                    nhraa_gemini_api_key: res.nhraa_gemini_api_key || '',
                     nhraa_debug_mode: !!res.nhraa_debug_mode,
                 });
                 setLoading(false);
@@ -116,27 +123,82 @@ const Settings = () => {
                     </Field>
 
                     <Field
-                        label="Claude API Key (Bring Your Own)"
-                        description="Enter your Anthropic API key to call Claude directly, bypassing the proxy. Your key is stored encrypted and never transmitted."
+                        label="AI Provider"
+                        description="Choose which AI service powers the assistant. Select a provider then enter its API key below."
                     >
-                        <div className="nhraa-password-wrap">
-                            <input
-                                type={showKey ? 'text' : 'password'}
-                                className="nhraa-input-text"
-                                value={settings.nhraa_claude_api_key}
-                                onChange={e => set('nhraa_claude_api_key', e.target.value)}
-                                placeholder="sk-ant-api03-…"
-                                autoComplete="new-password"
-                            />
-                            <button
-                                type="button"
-                                className="nhraa-toggle-key"
-                                onClick={() => setShowKey(v => !v)}
-                            >
-                                {showKey ? 'Hide' : 'Show'}
-                            </button>
-                        </div>
+                        <select
+                            className="nhraa-input-text"
+                            value={settings.nhraa_ai_provider}
+                            onChange={e => set('nhraa_ai_provider', e.target.value)}
+                        >
+                            <option value="claude">Claude (Anthropic) — paid</option>
+                            <option value="openai">ChatGPT (OpenAI) — paid</option>
+                            <option value="gemini">Gemini (Google) — free tier available</option>
+                        </select>
                     </Field>
+
+                    {settings.nhraa_ai_provider === 'claude' && (
+                        <Field
+                            label="Anthropic API Key"
+                            description="Get your key at console.anthropic.com → API Keys."
+                        >
+                            <div className="nhraa-password-wrap">
+                                <input
+                                    type={showKey.claude ? 'text' : 'password'}
+                                    className="nhraa-input-text"
+                                    value={settings.nhraa_claude_api_key}
+                                    onChange={e => set('nhraa_claude_api_key', e.target.value)}
+                                    placeholder="sk-ant-api03-…"
+                                    autoComplete="new-password"
+                                />
+                                <button type="button" className="nhraa-toggle-key" onClick={() => toggleKey('claude')}>
+                                    {showKey.claude ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                        </Field>
+                    )}
+
+                    {settings.nhraa_ai_provider === 'openai' && (
+                        <Field
+                            label="OpenAI API Key"
+                            description="Get your key at platform.openai.com → API Keys. Uses gpt-4o-mini (low cost)."
+                        >
+                            <div className="nhraa-password-wrap">
+                                <input
+                                    type={showKey.openai ? 'text' : 'password'}
+                                    className="nhraa-input-text"
+                                    value={settings.nhraa_openai_api_key}
+                                    onChange={e => set('nhraa_openai_api_key', e.target.value)}
+                                    placeholder="sk-…"
+                                    autoComplete="new-password"
+                                />
+                                <button type="button" className="nhraa-toggle-key" onClick={() => toggleKey('openai')}>
+                                    {showKey.openai ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                        </Field>
+                    )}
+
+                    {settings.nhraa_ai_provider === 'gemini' && (
+                        <Field
+                            label="Google Gemini API Key"
+                            description="Get your free key at aistudio.google.com → Get API Key. Uses gemini-2.0-flash (free tier)."
+                        >
+                            <div className="nhraa-password-wrap">
+                                <input
+                                    type={showKey.gemini ? 'text' : 'password'}
+                                    className="nhraa-input-text"
+                                    value={settings.nhraa_gemini_api_key}
+                                    onChange={e => set('nhraa_gemini_api_key', e.target.value)}
+                                    placeholder="AIza…"
+                                    autoComplete="new-password"
+                                />
+                                <button type="button" className="nhraa-toggle-key" onClick={() => toggleKey('gemini')}>
+                                    {showKey.gemini ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                        </Field>
+                    )}
                 </div>
 
                 <div className="nhraa-settings-section">

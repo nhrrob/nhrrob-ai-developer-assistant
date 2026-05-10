@@ -255,9 +255,12 @@ class Api {
      */
     public function get_settings( WP_REST_Request $request ) {
         return rest_ensure_response( array(
-            'nhraa_licence_key'   => get_option( 'nhraa_licence_key', '' ),
+            'nhraa_licence_key'    => get_option( 'nhraa_licence_key', '' ),
+            'nhraa_ai_provider'    => get_option( 'nhraa_ai_provider', 'claude' ),
             'nhraa_claude_api_key' => get_option( 'nhraa_claude_api_key', '' ) ? '***' : '',
-            'nhraa_debug_mode'    => (bool) get_option( 'nhraa_debug_mode', false ),
+            'nhraa_openai_api_key' => get_option( 'nhraa_openai_api_key', '' ) ? '***' : '',
+            'nhraa_gemini_api_key' => get_option( 'nhraa_gemini_api_key', '' ) ? '***' : '',
+            'nhraa_debug_mode'     => (bool) get_option( 'nhraa_debug_mode', false ),
         ) );
     }
 
@@ -271,8 +274,21 @@ class Api {
             update_option( 'nhraa_licence_key', sanitize_text_field( $params['nhraa_licence_key'] ) );
         }
 
+        $allowed_providers = array( 'claude', 'openai', 'gemini' );
+        if ( isset( $params['nhraa_ai_provider'] ) && in_array( $params['nhraa_ai_provider'], $allowed_providers, true ) ) {
+            update_option( 'nhraa_ai_provider', $params['nhraa_ai_provider'] );
+        }
+
         if ( isset( $params['nhraa_claude_api_key'] ) && '***' !== $params['nhraa_claude_api_key'] ) {
             update_option( 'nhraa_claude_api_key', sanitize_text_field( $params['nhraa_claude_api_key'] ) );
+        }
+
+        if ( isset( $params['nhraa_openai_api_key'] ) && '***' !== $params['nhraa_openai_api_key'] ) {
+            update_option( 'nhraa_openai_api_key', sanitize_text_field( $params['nhraa_openai_api_key'] ) );
+        }
+
+        if ( isset( $params['nhraa_gemini_api_key'] ) && '***' !== $params['nhraa_gemini_api_key'] ) {
+            update_option( 'nhraa_gemini_api_key', sanitize_text_field( $params['nhraa_gemini_api_key'] ) );
         }
 
         if ( isset( $params['nhraa_debug_mode'] ) ) {

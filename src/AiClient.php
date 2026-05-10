@@ -7,8 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AiClient {
 
-    const MODEL = 'claude-sonnet-4-5-20251001';
-    const BACKEND_URL = 'https://your-backend.com/api/chat';
+    const CLAUDE_MODEL  = 'claude-sonnet-4-6';
+    const OPENAI_MODEL  = 'gpt-4o-mini';
+    const GEMINI_MODEL  = 'gemini-2.0-flash';
+    const BACKEND_URL   = 'https://your-backend.com/api/chat';
 
     /**
      * @param string $user_message
@@ -16,10 +18,23 @@ class AiClient {
      * @param array  $conversation_history  Previous messages [['role'=>'user','content'=>'...'], ...]
      */
     public function send_request( $user_message, $context, $conversation_history = array() ) {
-        $api_key = get_option( 'nhraa_claude_api_key' );
+        $provider = get_option( 'nhraa_ai_provider', 'claude' );
 
-        if ( ! empty( $api_key ) ) {
-            return $this->call_anthropic( $api_key, $user_message, $context, $conversation_history );
+        if ( 'openai' === $provider ) {
+            $api_key = get_option( 'nhraa_openai_api_key' );
+            if ( ! empty( $api_key ) ) {
+                return $this->call_openai( $api_key, $user_message, $context, $conversation_history );
+            }
+        } elseif ( 'gemini' === $provider ) {
+            $api_key = get_option( 'nhraa_gemini_api_key' );
+            if ( ! empty( $api_key ) ) {
+                return $this->call_gemini( $api_key, $user_message, $context, $conversation_history );
+            }
+        } else {
+            $api_key = get_option( 'nhraa_claude_api_key' );
+            if ( ! empty( $api_key ) ) {
+                return $this->call_anthropic( $api_key, $user_message, $context, $conversation_history );
+            }
         }
 
         return $this->call_backend( $user_message, $context, $conversation_history );
@@ -31,7 +46,6 @@ class AiClient {
     private function call_anthropic( $api_key, $user_message, $context, $history ) {
         $system_prompt = $this->build_system_prompt( $context );
 
-        // Build messages array with history + current message
         $messages = array();
         foreach ( $history as $h ) {
             if ( in_array( $h['role'], array( 'user', 'assistant' ), true ) ) {
@@ -41,13 +55,10 @@ class AiClient {
                 );
             }
         }
-        $messages[] = array(
-            'role'    => 'user',
-            'content' => $user_message,
-        );
+        $messages[] = array( 'role' => 'user', 'content' => $user_message );
 
         $body = array(
-            'model'      => self::MODEL,
+            'model'      => self::CLAUDE_MODEL,
             'max_tokens' => 4000,
             'system'     => $system_prompt,
             'messages'   => $messages,
@@ -77,7 +88,103 @@ class AiClient {
             return array( 'error' => $err );
         }
 
-        return $this->parse_response( $data );
+        $text = isset( $data['content'][0]['text'] ) ? $data['content'][0]['text'] : null;
+        return $this->parse_text_response( $text );
+    }
+
+    /**
+     * Call the OpenAI API (gpt-4o-mini).
+     */
+    private function call_openai( $api_key, $user_message, $context, $history ) {
+        $system_prompt = $this->build_system_prompt( $context );
+
+        $messages = array( array( 'role' => 'system', 'content' => $system_prompt ) );
+        foreach ( $history as $h ) {
+            if ( in_array( $h['role'], array( 'user', 'assistant' ), true ) ) {
+                $messages[] = array( 'role' => $h['role'], 'content' => $h['content'] );
+            }
+        }
+        $messages[] = array( 'role' => 'user', 'content' => $user_message );
+
+        $body = array(
+            'model'      => self::OPENAI_MODEL,
+            'messages'   => $messages,
+            'max_tokens' => 4000,
+        );
+
+        $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type'  => 'application/json',
+            ),
+            'body'    => wp_json_encode( $body ),
+            'timeout' => 60,
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return array( 'error' => 'OpenAI connection error: ' . $response->get_error_message() );
+        }
+
+        $status   = wp_remote_retrieve_response_code( $response );
+        $raw_body = wp_remote_retrieve_body( $response );
+        $data     = json_decode( $raw_body, true );
+
+        if ( $status !== 200 ) {
+            $err = isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown OpenAI error';
+            $this->maybe_debug_log( 'OpenAI error (' . $status . '): ' . $err );
+            return array( 'error' => $err );
+        }
+
+        $text = isset( $data['choices'][0]['message']['content'] ) ? $data['choices'][0]['message']['content'] : null;
+        return $this->parse_text_response( $text );
+    }
+
+    /**
+     * Call the Google Gemini API (gemini-1.5-flash — free tier).
+     */
+    private function call_gemini( $api_key, $user_message, $context, $history ) {
+        $system_prompt = $this->build_system_prompt( $context );
+
+        $contents = array();
+        foreach ( $history as $h ) {
+            // Gemini uses 'model' instead of 'assistant'
+            $role       = 'assistant' === $h['role'] ? 'model' : 'user';
+            $contents[] = array( 'role' => $role, 'parts' => array( array( 'text' => $h['content'] ) ) );
+        }
+        $contents[] = array( 'role' => 'user', 'parts' => array( array( 'text' => $user_message ) ) );
+
+        $body = array(
+            'system_instruction' => array( 'parts' => array( array( 'text' => $system_prompt ) ) ),
+            'contents'           => $contents,
+            'generationConfig'   => array( 'maxOutputTokens' => 4000 ),
+        );
+
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . self::GEMINI_MODEL . ':generateContent?key=' . $api_key;
+
+        $response = wp_remote_post( $url, array(
+            'headers' => array( 'Content-Type' => 'application/json' ),
+            'body'    => wp_json_encode( $body ),
+            'timeout' => 60,
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return array( 'error' => 'Gemini connection error: ' . $response->get_error_message() );
+        }
+
+        $status   = wp_remote_retrieve_response_code( $response );
+        $raw_body = wp_remote_retrieve_body( $response );
+        $data     = json_decode( $raw_body, true );
+
+        if ( $status !== 200 ) {
+            $err = isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown Gemini error';
+            $this->maybe_debug_log( 'Gemini error (' . $status . '): ' . $err );
+            return array( 'error' => $err );
+        }
+
+        $text = isset( $data['candidates'][0]['content']['parts'][0]['text'] )
+            ? $data['candidates'][0]['content']['parts'][0]['text']
+            : null;
+        return $this->parse_text_response( $text );
     }
 
     /**
@@ -127,14 +234,12 @@ class AiClient {
     }
 
     /**
-     * Parse Claude API response into the AI response array.
+     * Parse raw text from any AI provider into the expected response array.
      */
-    private function parse_response( $data ) {
-        if ( ! isset( $data['content'][0]['text'] ) ) {
-            return array( 'error' => 'Unexpected Claude response format.' );
+    private function parse_text_response( $text ) {
+        if ( null === $text ) {
+            return array( 'error' => 'Unexpected AI response format.' );
         }
-
-        $text = $data['content'][0]['text'];
 
         // Strip markdown code fences if present
         $text = preg_replace( '/^```(?:json)?\s*/im', '', $text );

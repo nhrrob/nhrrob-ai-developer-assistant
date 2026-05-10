@@ -18,6 +18,7 @@ class Activator {
             description text NOT NULL,
             change_type varchar(50) NOT NULL,
             file_target varchar(255),
+            code longtext,
             created_at datetime NOT NULL,
             status varchar(20) DEFAULT 'applied',
             PRIMARY KEY  (id)

@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Changelog {
 
-    public function log_change( $request_msg, $description, $change_type, $file_target ) {
+    public function log_change( $request_msg, $description, $change_type, $file_target, $code = '' ) {
         global $wpdb;
 
         $wpdb->insert(
@@ -17,10 +17,11 @@ class Changelog {
                 'description' => $description,
                 'change_type' => $change_type,
                 'file_target' => $file_target,
+                'code'        => $code,
                 'created_at'  => current_time( 'mysql' ),
                 'status'      => 'applied'
             ),
-            array( '%s', '%s', '%s', '%s', '%s', '%s' )
+            array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
         );
 
         return $wpdb->insert_id;

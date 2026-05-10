@@ -4,10 +4,10 @@ import History from './History';
 import Settings from './Settings';
 import './style.css';
 
-const SparkleIcon = () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.5 2.5L13.8 8.2L19.5 10.5L13.8 12.8L11.5 18.5L9.2 12.8L3.5 10.5L9.2 8.2L11.5 2.5Z"/>
-        <path d="M18.5 15.5L19.4 18L22 18.9L19.4 19.8L18.5 22.5L17.6 19.8L15 18.9L17.6 18L18.5 15.5Z"/>
+const CodeIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14.6 16.6l4.6-4.6-4.6-4.6 1.4-1.4 6 6-6 6-1.4-1.4zm-5.2 0L4.8 12l4.6-4.6L8 6 2 12l6 6 1.4-1.4z"/>
+        <path d="M9.5 4.5l1.9-.5 3.6 15-1.9.5z"/>
     </svg>
 );
 
@@ -50,8 +50,8 @@ const App = () => {
         <div className="nhraa-app">
             <header className="nhraa-app-header">
                 <div className="nhraa-brand">
-                    <span className="nhraa-brand-icon"><SparkleIcon /></span>
-                    <span className="nhraa-brand-name">AI Developer</span>
+                    <span className="nhraa-brand-icon"><CodeIcon /></span>
+                    <span className="nhraa-brand-name">AI Developer Assistant</span>
                     <span className="nhraa-brand-badge">Beta</span>
                 </div>
 

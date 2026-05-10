@@ -9,10 +9,10 @@ const SUGGESTIONS = [
     'Change the primary button color to #e63946',
 ];
 
-const SparkleIcon = () => (
+const CodeIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.5 2.5L13.8 8.2L19.5 10.5L13.8 12.8L11.5 18.5L9.2 12.8L3.5 10.5L9.2 8.2L11.5 2.5Z"/>
-        <path d="M18.5 15.5L19.4 18L22 18.9L19.4 19.8L18.5 22.5L17.6 19.8L15 18.9L17.6 18L18.5 15.5Z"/>
+        <path d="M14.6 16.6l4.6-4.6-4.6-4.6 1.4-1.4 6 6-6 6-1.4-1.4zm-5.2 0L4.8 12l4.6-4.6L8 6 2 12l6 6 1.4-1.4z"/>
+        <path d="M9.5 4.5l1.9-.5 3.6 15-1.9.5z"/>
     </svg>
 );
 
@@ -161,7 +161,7 @@ const Chat = () => {
                     {messages.length === 0 && (
                         <div className="nhraa-empty-state">
                             <div className="nhraa-empty-icon">
-                                <SparkleIcon />
+                                <CodeIcon />
                             </div>
                             <h2>Your AI Developer is ready</h2>
                             <p>Describe a change in plain English and I'll implement it on your site — no coding needed.</p>
@@ -182,7 +182,7 @@ const Chat = () => {
                         >
                             {msg.role === 'assistant' && (
                                 <div className="nhraa-msg-avatar" aria-hidden>
-                                    <SparkleIcon />
+                                    <CodeIcon />
                                 </div>
                             )}
                             <div className="nhraa-msg-body">
@@ -217,7 +217,7 @@ const Chat = () => {
                     {loading && (
                         <div className="nhraa-msg nhraa-msg--assistant">
                             <div className="nhraa-msg-avatar" aria-hidden>
-                                <SparkleIcon />
+                                <CodeIcon />
                             </div>
                             <div className="nhraa-msg-body">
                                 <div className="nhraa-msg-bubble nhraa-typing-bubble">

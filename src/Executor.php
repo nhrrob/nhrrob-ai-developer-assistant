@@ -32,7 +32,7 @@ class Executor {
             return $validation;
         }
 
-        $change_id = $this->changelog->log_change( $user_message, $description, $change_type, $file_target );
+        $change_id = $this->changelog->log_change( $user_message, $description, $change_type, $file_target, $code );
 
         if ( 'css' === $change_type && 'custom-css' === $file_target ) {
             $this->apply_css_change( $change_id, $code );

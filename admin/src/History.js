@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
 const UndoIcon = () => (
@@ -31,6 +31,14 @@ const StatusBadge = ({ status }) => (
     </span>
 );
 
+const TARGET_LABELS = {
+    'custom-css':  'Appearance → Custom CSS',
+    'custom-js':   'Footer JS snippet',
+    'functions-snippet': 'PHP snippets file',
+};
+
+const formatTarget = (target) => TARGET_LABELS[target] || (target ? `Option: ${target}` : '—');
+
 const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     try {
@@ -40,6 +48,19 @@ const formatDate = (dateStr) => {
     } catch {
         return dateStr;
     }
+};
+
+const CodeBlock = ({ code }) => {
+    const [open, setOpen] = useState(false);
+    if (!code) return <span className="nhraa-col-done">—</span>;
+    return (
+        <div>
+            <button type="button" className="nhraa-code-toggle" onClick={() => setOpen(v => !v)}>
+                {open ? 'Hide code' : 'View code'}
+            </button>
+            {open && <pre className="nhraa-code-preview">{code}</pre>}
+        </div>
+    );
 };
 
 const History = () => {
@@ -121,6 +142,8 @@ const History = () => {
                                 <th>Request</th>
                                 <th>Description</th>
                                 <th>Type</th>
+                                <th>Applied To</th>
+                                <th>Code</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -136,6 +159,8 @@ const History = () => {
                                         <span className="nhraa-truncate" title={item.description}>{item.description}</span>
                                     </td>
                                     <td><TypeBadge type={item.change_type} /></td>
+                                    <td className="nhraa-col-target">{formatTarget(item.file_target)}</td>
+                                    <td><CodeBlock code={item.code} /></td>
                                     <td><StatusBadge status={item.status} /></td>
                                     <td>
                                         {item.status === 'applied' ? (
