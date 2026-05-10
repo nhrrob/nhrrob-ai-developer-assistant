@@ -11,7 +11,7 @@ class AiClient {
     
     public function send_request( $user_message, $context ) {
         // Direct integration if API key is provided
-        $api_key = get_option( 'wpad_claude_api_key' );
+        $api_key = get_option( 'nhraa_claude_api_key' );
         
         if ( ! empty( $api_key ) ) {
             return $this->call_anthropic_api( $api_key, $user_message, $context );
@@ -34,7 +34,7 @@ class AiClient {
         $response = wp_remote_post( $this->backend_url, array(
             'headers' => array(
                 'Content-Type'  => 'application/json',
-                'X-Licence-Key' => get_option( 'wpad_licence_key', '' ),
+                'X-Licence-Key' => get_option( 'nhraa_licence_key', '' ),
                 'X-Site-URL'    => get_site_url()
             ),
             'body'    => wp_json_encode( $body ),

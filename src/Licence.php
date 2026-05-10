@@ -11,7 +11,7 @@ class Licence {
     // In reality, this would communicate with the Laravel backend
 
     public function get_plan() {
-        $key = get_option( 'wpad_licence_key' );
+        $key = get_option( 'nhraa_licence_key' );
         if ( ! empty( $key ) && strlen( $key ) > 10 ) {
             return 'pro';
         }
@@ -25,7 +25,7 @@ class Licence {
 
         // Free tier logic: max 10 requests per month
         $current_month = gmdate('Y_m');
-        $usage_key = 'wpad_usage_' . $current_month;
+        $usage_key = 'nhraa_usage_' . $current_month;
         $usage = (int) get_option( $usage_key, 0 );
 
         if ( $usage >= 10 ) {
@@ -41,7 +41,7 @@ class Licence {
         }
 
         $current_month = gmdate('Y_m');
-        $usage_key = 'wpad_usage_' . $current_month;
+        $usage_key = 'nhraa_usage_' . $current_month;
         $usage = (int) get_option( $usage_key, 0 );
         update_option( $usage_key, $usage + 1 );
     }

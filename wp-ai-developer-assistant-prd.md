@@ -176,7 +176,7 @@ wp-ai-developer/
 
 ```sql
 -- Change log: every change ever made
-CREATE TABLE {prefix}wpad_changes (
+CREATE TABLE {prefix}nhraa_changes (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     request     TEXT NOT NULL,              -- user's original message
     description TEXT NOT NULL,             -- plain English of what was done
@@ -187,7 +187,7 @@ CREATE TABLE {prefix}wpad_changes (
 );
 
 -- Snapshots: file state before each change (for undo)
-CREATE TABLE {prefix}wpad_snapshots (
+CREATE TABLE {prefix}nhraa_snapshots (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_id   BIGINT UNSIGNED NOT NULL,
     snapshot_type VARCHAR(20) NOT NULL,    -- file | option
@@ -195,11 +195,11 @@ CREATE TABLE {prefix}wpad_snapshots (
     original_value LONGTEXT,              -- content before change
     new_value   LONGTEXT,                 -- content after change
     created_at  DATETIME NOT NULL,
-    FOREIGN KEY (change_id) REFERENCES {prefix}wpad_changes(id)
+    FOREIGN KEY (change_id) REFERENCES {prefix}nhraa_changes(id)
 );
 
 -- Chat history: conversation per session
-CREATE TABLE {prefix}wpad_messages (
+CREATE TABLE {prefix}nhraa_messages (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     role        VARCHAR(10) NOT NULL,      -- user | assistant
     content     TEXT NOT NULL,
@@ -232,7 +232,7 @@ CREATE TABLE {prefix}wpad_messages (
 - No jargon — plain English everywhere
 
 **Chat history:**
-- Stored in `wpad_messages` table
+- Stored in `nhraa_messages` table
 - Last 50 messages shown on load
 - Older messages accessible via "Load more"
 - History persists across sessions
@@ -336,33 +336,33 @@ The executor applies changes to the site safely. It uses a whitelist approach �
 | Target | Method | Location |
 |--------|--------|----------|
 | `custom-css` | Append to custom CSS via WP Customizer API | wp_options: `custom_css_post_id` |
-| `functions-snippet` | Append to a managed snippets file | `/wp-content/wpad-snippets.php` (required by child theme or plugin) |
+| `functions-snippet` | Append to a managed snippets file | `/wp-content/nhraa-snippets.php` (required by child theme or plugin) |
 | `custom-js` | Enqueue via wp_footer hook | Stored in wp_options, output via hook |
 | `option-{name}` | `update_option()` | WordPress options table |
 
 **The snippets file approach:**
-Instead of writing to `functions.php`, all PHP snippets are written to `/wp-content/wpad-snippets.php`. This file is auto-created and auto-required. It is structured with named sections so each snippet can be individually removed on undo.
+Instead of writing to `functions.php`, all PHP snippets are written to `/wp-content/nhraa-snippets.php`. This file is auto-created and auto-required. It is structured with named sections so each snippet can be individually removed on undo.
 
 ```php
 <?php
 // WP AI Developer — Managed Snippets File
 // Do not edit manually. Use the AI Developer plugin to manage.
 
-// [WPAD-SNIPPET-001 | 2026-05-09 | sticky header]
+// [NHRAA-SNIPPET-001 | 2026-05-09 | sticky header]
 add_action('wp_head', function() { ... });
-// [/WPAD-SNIPPET-001]
+// [/NHRAA-SNIPPET-001]
 
-// [WPAD-SNIPPET-002 | 2026-05-09 | whatsapp button]
+// [NHRAA-SNIPPET-002 | 2026-05-09 | whatsapp button]
 add_action('wp_footer', function() { ... });
-// [/WPAD-SNIPPET-002]
+// [/NHRAA-SNIPPET-002]
 ```
 
 **Before applying any change:**
 1. Take a snapshot of the current state (file content or option value)
-2. Store snapshot in `wpad_snapshots`
+2. Store snapshot in `nhraa_snapshots`
 3. Apply the change
 4. Verify the change was written correctly
-5. Log to `wpad_changes`
+5. Log to `nhraa_changes`
 6. Return confirmation
 
 ### 4.5 Undo system
@@ -429,7 +429,7 @@ Upgrade to Pro for unlimited requests — just $9/month.
 ```
 
 **Usage counter:**
-- Stored in `wp_options` as `wpad_usage_{year}_{month}`
+- Stored in `wp_options` as `nhraa_usage_{year}_{month}`
 - Reset automatically on the 1st of each month
 - Incremented only on successful AI responses (not on errors or "cannot do" responses)
 
@@ -571,8 +571,8 @@ CREATE TABLE usage_logs (
 - Plugin activates without errors
 - Admin menu item "AI Developer" appears
 - Chat page renders with input box and message area
-- Messages stored to `wpad_messages` table
-- Basic REST endpoint `/wp-json/wpad/v1/chat` accepts a message
+- Messages stored to `nhraa_messages` table
+- Basic REST endpoint `/wp-json/nhraa/v1/chat` accepts a message
 - Hardcoded response echoed back (no AI yet) — confirms the loop works
 
 **Files to create:**
@@ -590,8 +590,8 @@ CREATE TABLE usage_logs (
 - Plugin calls Laravel backend with message + context
 - Laravel backend calls Claude API and returns JSON
 - Executor applies CSS and JS changes to site
-- Changes logged to `wpad_changes`
-- Snapshots saved to `wpad_snapshots`
+- Changes logged to `nhraa_changes`
+- Snapshots saved to `nhraa_snapshots`
 - Confirmation message shown in chat
 
 **Files to create:**
@@ -833,7 +833,7 @@ Before shipping each week's work, verify:
 
 | Term | Meaning |
 |------|---------|
-| Snippet | A block of PHP code managed by the plugin in `wpad-snippets.php` |
+| Snippet | A block of PHP code managed by the plugin in `nhraa-snippets.php` |
 | Snapshot | A saved copy of a file or option before a change was made |
 | Change | A single AI-implemented modification to the site |
 | Undo | Restoring a change to its pre-change state using a snapshot |

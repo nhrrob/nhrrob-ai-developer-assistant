@@ -25,14 +25,14 @@ class Plugin {
     }
 
     public function enqueue_custom_js() {
-        $js = get_option( 'wpad_custom_js', '' );
+        $js = get_option( 'nhraa_custom_js', '' );
         if ( ! empty( $js ) ) {
             echo "<script type='text/javascript'>\n" . $js . "\n</script>\n";
         }
     }
 
     public function load_php_snippets() {
-        $snippets_file = WP_CONTENT_DIR . '/wpad-snippets.php';
+        $snippets_file = WP_CONTENT_DIR . '/nhraa-snippets.php';
         if ( file_exists( $snippets_file ) ) {
             require_once $snippets_file;
         }

@@ -14,7 +14,7 @@ class Undo {
 
         // Verify change exists and is applied
         $change = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}wpad_changes WHERE id = %d AND status = 'applied'",
+            "SELECT * FROM {$wpdb->prefix}nhraa_changes WHERE id = %d AND status = 'applied'",
             $change_id
         ) );
 
@@ -24,7 +24,7 @@ class Undo {
 
         // Get snapshot
         $snapshot = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}wpad_snapshots WHERE change_id = %d",
+            "SELECT * FROM {$wpdb->prefix}nhraa_snapshots WHERE change_id = %d",
             $change_id
         ) );
 
@@ -46,7 +46,7 @@ class Undo {
 
         if ( $success ) {
             $wpdb->update(
-                $wpdb->prefix . 'wpad_changes',
+                $wpdb->prefix . 'nhraa_changes',
                 array( 'status' => 'undone' ),
                 array( 'id' => $change_id ),
                 array( '%s' ),
@@ -69,7 +69,7 @@ class Undo {
     }
 
     private function revert_file( $filename, $original_value, $change_id ) {
-        if ( 'wpad-snippets.php' === $filename ) {
+        if ( 'nhraa-snippets.php' === $filename ) {
             $filepath = WP_CONTENT_DIR . '/' . $filename;
             
             if ( ! file_exists( $filepath ) ) {
@@ -79,7 +79,7 @@ class Undo {
             $current_content = file_get_contents( $filepath );
             
             // Remove the block using regex
-            $pattern = '/\n\/\/ \[WPAD-SNIPPET-' . $change_id . ' \| [^\]]+\]\n.*?\/\/ \[\/WPAD-SNIPPET-' . $change_id . '\]\n/s';
+            $pattern = '/\n\/\/ \[NHRAA-SNIPPET-' . $change_id . ' \| [^\]]+\]\n.*?\/\/ \[\/NHRAA-SNIPPET-' . $change_id . '\]\n/s';
             $new_content = preg_replace( $pattern, '', $current_content );
             
             if ( $new_content !== null ) {

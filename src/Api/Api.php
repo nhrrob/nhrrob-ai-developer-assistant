@@ -19,31 +19,31 @@ class Api {
     }
 
     public function register_routes() {
-        register_rest_route( 'wpad/v1', '/chat', array(
+        register_rest_route( 'nhraa/v1', '/chat', array(
             'methods'             => 'POST',
             'callback'            => array( $this, 'handle_chat_request' ),
             'permission_callback' => array( $this, 'check_permission' ),
         ) );
         
-        register_rest_route( 'wpad/v1', '/undo', array(
+        register_rest_route( 'nhraa/v1', '/undo', array(
             'methods'             => 'POST',
             'callback'            => array( $this, 'handle_undo_request' ),
             'permission_callback' => array( $this, 'check_permission' ),
         ) );
 
-        register_rest_route( 'wpad/v1', '/settings', array(
+        register_rest_route( 'nhraa/v1', '/settings', array(
             'methods'             => 'GET',
             'callback'            => array( $this, 'get_settings' ),
             'permission_callback' => array( $this, 'check_permission' ),
         ) );
 
-        register_rest_route( 'wpad/v1', '/settings', array(
+        register_rest_route( 'nhraa/v1', '/settings', array(
             'methods'             => 'POST',
             'callback'            => array( $this, 'save_settings' ),
             'permission_callback' => array( $this, 'check_permission' ),
         ) );
 
-        register_rest_route( 'wpad/v1', '/history', array(
+        register_rest_route( 'nhraa/v1', '/history', array(
             'methods'             => 'GET',
             'callback'            => array( $this, 'get_history' ),
             'permission_callback' => array( $this, 'check_permission' ),
@@ -64,7 +64,7 @@ class Api {
         // 1. Log the user message to DB
         global $wpdb;
         $wpdb->insert(
-            $wpdb->prefix . 'wpad_messages',
+            $wpdb->prefix . 'nhraa_messages',
             array(
                 'role'       => 'user',
                 'content'    => $message,
@@ -103,7 +103,7 @@ class Api {
 
         // 5. Log the assistant response to DB
         $wpdb->insert(
-            $wpdb->prefix . 'wpad_messages',
+            $wpdb->prefix . 'nhraa_messages',
             array(
                 'role'       => 'assistant',
                 'content'    => isset($ai_response['confirmation_message']) ? $ai_response['confirmation_message'] : 'Done.',
@@ -135,25 +135,25 @@ class Api {
 
     public function get_settings( WP_REST_Request $request ) {
         return rest_ensure_response( array(
-            'wpad_licence_key' => get_option( 'wpad_licence_key', '' ),
-            'wpad_claude_api_key' => get_option( 'wpad_claude_api_key', '' ),
+            'nhraa_licence_key' => get_option( 'nhraa_licence_key', '' ),
+            'nhraa_claude_api_key' => get_option( 'nhraa_claude_api_key', '' ),
         ) );
     }
 
     public function save_settings( WP_REST_Request $request ) {
         $params = $request->get_json_params();
-        if ( isset( $params['wpad_licence_key'] ) ) {
-            update_option( 'wpad_licence_key', sanitize_text_field( $params['wpad_licence_key'] ) );
+        if ( isset( $params['nhraa_licence_key'] ) ) {
+            update_option( 'nhraa_licence_key', sanitize_text_field( $params['nhraa_licence_key'] ) );
         }
-        if ( isset( $params['wpad_claude_api_key'] ) ) {
-            update_option( 'wpad_claude_api_key', sanitize_text_field( $params['wpad_claude_api_key'] ) );
+        if ( isset( $params['nhraa_claude_api_key'] ) ) {
+            update_option( 'nhraa_claude_api_key', sanitize_text_field( $params['nhraa_claude_api_key'] ) );
         }
         return rest_ensure_response( array( 'success' => true ) );
     }
 
     public function get_history( WP_REST_Request $request ) {
         global $wpdb;
-        $table = $wpdb->prefix . 'wpad_changes';
+        $table = $wpdb->prefix . 'nhraa_changes';
         $results = $wpdb->get_results( "SELECT * FROM $table ORDER BY created_at DESC LIMIT 50", ARRAY_A );
         return rest_ensure_response( $results );
     }

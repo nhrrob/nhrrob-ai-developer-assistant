@@ -12,16 +12,16 @@ const App = () => {
     };
 
     return (
-        <div className="wpad-react-wrap">
-            <div className="wpad-topbar">
-                <div className="wpad-logo">
+        <div className="nhraa-react-wrap">
+            <div className="nhraa-topbar">
+                <div className="nhraa-logo">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path d="M11.5 2.5L13.8 8.2L19.5 10.5L13.8 12.8L11.5 18.5L9.2 12.8L3.5 10.5L9.2 8.2L11.5 2.5Z"/>
                         <path d="M18.5 16.5L19.5 19L22 20L19.5 21L18.5 23.5L17.5 21L15 20L17.5 19L18.5 16.5Z"/>
                     </svg>
                     <h2>AI Developer</h2>
                 </div>
-                <ul className="wpad-nav">
+                <ul className="nhraa-nav">
                     <li>
                         <button 
                             className={activeTab === 'settings' ? 'active' : ''} 
@@ -40,7 +40,7 @@ const App = () => {
                     </li>
                 </ul>
             </div>
-            <div className="wpad-content">
+            <div className="nhraa-content">
                 {activeTab === 'settings' && <Settings />}
                 {activeTab === 'history' && <History />}
             </div>

@@ -69,22 +69,22 @@ class Executor {
     }
 
     private function apply_js_change( $change_id, $code ) {
-        $original_value = get_option( 'wpad_custom_js', '' );
+        $original_value = get_option( 'nhraa_custom_js', '' );
         $new_value = $original_value . "\n" . $code;
 
-        $this->changelog->create_snapshot( $change_id, 'option', 'wpad_custom_js', $original_value, $new_value );
-        update_option( 'wpad_custom_js', $new_value );
+        $this->changelog->create_snapshot( $change_id, 'option', 'nhraa_custom_js', $original_value, $new_value );
+        update_option( 'nhraa_custom_js', $new_value );
         return true;
     }
 
     private function apply_php_change( $change_id, $code ) {
-        $snippets_file = WP_CONTENT_DIR . '/wpad-snippets.php';
+        $snippets_file = WP_CONTENT_DIR . '/nhraa-snippets.php';
         $original_value = file_exists( $snippets_file ) ? file_get_contents( $snippets_file ) : "<?php\n// WP AI Developer — Managed Snippets File\n// Do not edit manually. Use the AI Developer plugin to manage.\n\n";
         
-        $block = "\n// [WPAD-SNIPPET-{$change_id} | " . gmdate('Y-m-d') . "]\n{$code}\n// [/WPAD-SNIPPET-{$change_id}]\n";
+        $block = "\n// [NHRAA-SNIPPET-{$change_id} | " . gmdate('Y-m-d') . "]\n{$code}\n// [/NHRAA-SNIPPET-{$change_id}]\n";
         $new_value = $original_value . $block;
 
-        $this->changelog->create_snapshot( $change_id, 'file', 'wpad-snippets.php', $original_value, $new_value );
+        $this->changelog->create_snapshot( $change_id, 'file', 'nhraa-snippets.php', $original_value, $new_value );
         file_put_contents( $snippets_file, $new_value );
         return true;
     }

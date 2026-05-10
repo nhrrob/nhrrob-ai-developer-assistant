@@ -6,7 +6,7 @@ const History = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        apiFetch({ path: '/wpad/v1/history' }).then((res) => {
+        apiFetch({ path: '/nhraa/v1/history' }).then((res) => {
             setHistory(res);
             setLoading(false);
         }).catch((err) => {
@@ -18,7 +18,7 @@ const History = () => {
     if (loading) return <p>Loading history...</p>;
 
     return (
-        <div className="wpad-history-view">
+        <div className="nhraa-history-view">
             <h1>Change History</h1>
             <table className="wp-list-table widefat fixed striped table-view-list">
                 <thead>
@@ -39,7 +39,7 @@ const History = () => {
                                 <td>{item.request}</td>
                                 <td>{item.description}</td>
                                 <td>
-                                    <span className={`wpad-status wpad-status-${item.status}`}>
+                                    <span className={`nhraa-status nhraa-status-${item.status}`}>
                                         {item.status}
                                     </span>
                                 </td>

@@ -11,7 +11,7 @@ class Changelog {
         global $wpdb;
 
         $wpdb->insert(
-            $wpdb->prefix . 'wpad_changes',
+            $wpdb->prefix . 'nhraa_changes',
             array(
                 'request'     => $request_msg,
                 'description' => $description,
@@ -30,7 +30,7 @@ class Changelog {
         global $wpdb;
 
         $wpdb->insert(
-            $wpdb->prefix . 'wpad_snapshots',
+            $wpdb->prefix . 'nhraa_snapshots',
             array(
                 'change_id'      => $change_id,
                 'snapshot_type'  => $snapshot_type,

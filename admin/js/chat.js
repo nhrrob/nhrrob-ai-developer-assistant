@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const toggleBtn = document.getElementById('wpad-chat-toggle');
-    const closeBtn = document.getElementById('wpad-chat-close');
-    const chatWindow = document.getElementById('wpad-chat-window');
+    const toggleBtn = document.getElementById('nhraa-chat-toggle');
+    const closeBtn = document.getElementById('nhraa-chat-close');
+    const chatWindow = document.getElementById('nhraa-chat-window');
 
-    const input = document.getElementById('wpad-chat-input');
-    const sendBtn = document.getElementById('wpad-chat-send');
-    const history = document.getElementById('wpad-chat-history');
-    const counter = document.getElementById('wpad-char-count');
+    const input = document.getElementById('nhraa-chat-input');
+    const sendBtn = document.getElementById('nhraa-chat-send');
+    const history = document.getElementById('nhraa-chat-history');
+    const counter = document.getElementById('nhraa-char-count');
     const MAX_CHARS = 1000;
 
     if (!input || !sendBtn || !history || !counter) return;
@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle logic
     if (toggleBtn && chatWindow) {
         toggleBtn.addEventListener('click', function() {
-            chatWindow.classList.toggle('wpad-hidden');
-            if (!chatWindow.classList.contains('wpad-hidden')) {
+            chatWindow.classList.toggle('nhraa-hidden');
+            if (!chatWindow.classList.contains('nhraa-hidden')) {
                 input.focus();
                 history.scrollTop = history.scrollHeight;
             }
@@ -24,13 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (closeBtn && chatWindow) {
         closeBtn.addEventListener('click', function() {
-            chatWindow.classList.add('wpad-hidden');
+            chatWindow.classList.add('nhraa-hidden');
         });
     }
 
     // Create loading indicator
     const loadingIndicator = document.createElement('div');
-    loadingIndicator.className = 'wpad-loading-indicator';
+    loadingIndicator.className = 'nhraa-loading-indicator';
     loadingIndicator.textContent = 'Thinking...';
     history.appendChild(loadingIndicator);
 
@@ -62,10 +62,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function appendMessage(role, text, changeId = null) {
         const wrapper = document.createElement('div');
-        wrapper.className = `wpad-message wpad-${role}`;
+        wrapper.className = `nhraa-message nhraa-${role}`;
         
         const content = document.createElement('div');
-        content.className = 'wpad-message-content';
+        content.className = 'nhraa-message-content';
         
         const p = document.createElement('p');
         p.textContent = text;
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (changeId) {
             const undoBtn = document.createElement('button');
-            undoBtn.className = 'button button-small wpad-undo-btn';
+            undoBtn.className = 'button button-small nhraa-undo-btn';
             undoBtn.style.marginTop = '10px';
             undoBtn.textContent = 'Undo';
             undoBtn.dataset.changeId = changeId;
@@ -97,11 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.disabled = true;
         btn.textContent = 'Undoing...';
 
-        fetch(wpadChatData.undoUrl, {
+        fetch(nhraaChatData.undoUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-WP-Nonce': wpadChatData.nonce
+                'X-WP-Nonce': nhraaChatData.nonce
             },
             body: JSON.stringify({ change_id: changeId })
         })
@@ -142,11 +142,11 @@ document.addEventListener('DOMContentLoaded', function() {
         history.scrollTop = history.scrollHeight;
 
         // Send API request
-        fetch(wpadChatData.apiUrl, {
+        fetch(nhraaChatData.apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-WP-Nonce': wpadChatData.nonce
+                'X-WP-Nonce': nhraaChatData.nonce
             },
             body: JSON.stringify({ message: message })
         })

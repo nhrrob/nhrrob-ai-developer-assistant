@@ -2,16 +2,16 @@ import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
 const Settings = () => {
-    const [settings, setSettings] = useState({ wpad_licence_key: '', wpad_claude_api_key: '' });
+    const [settings, setSettings] = useState({ nhraa_licence_key: '', nhraa_claude_api_key: '' });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
 
     useEffect(() => {
-        apiFetch({ path: '/wpad/v1/settings' }).then((res) => {
+        apiFetch({ path: '/nhraa/v1/settings' }).then((res) => {
             setSettings({
-                wpad_licence_key: res.wpad_licence_key || '',
-                wpad_claude_api_key: res.wpad_claude_api_key || '',
+                nhraa_licence_key: res.nhraa_licence_key || '',
+                nhraa_claude_api_key: res.nhraa_claude_api_key || '',
             });
             setLoading(false);
         }).catch((err) => {
@@ -26,7 +26,7 @@ const Settings = () => {
         setMessage(null);
 
         apiFetch({
-            path: '/wpad/v1/settings',
+            path: '/nhraa/v1/settings',
             method: 'POST',
             data: settings,
         }).then((res) => {
@@ -41,31 +41,31 @@ const Settings = () => {
     if (loading) return <p>Loading settings...</p>;
 
     return (
-        <div className="wpad-settings-view">
+        <div className="nhraa-settings-view">
             <h1>Settings</h1>
             {message && (
-                <div className={`wpad-notice wpad-${message.type}`}>
+                <div className={`nhraa-notice nhraa-${message.type}`}>
                     <p>{message.text}</p>
                 </div>
             )}
-            <form onSubmit={handleSave} className="wpad-form">
-                <div className="wpad-form-group">
+            <form onSubmit={handleSave} className="nhraa-form">
+                <div className="nhraa-form-group">
                     <label>Pro Licence Key</label>
                     <input 
                         type="text" 
-                        value={settings.wpad_licence_key} 
-                        onChange={(e) => setSettings({...settings, wpad_licence_key: e.target.value})} 
+                        value={settings.nhraa_licence_key} 
+                        onChange={(e) => setSettings({...settings, nhraa_licence_key: e.target.value})} 
                         className="regular-text"
                     />
                     <p className="description">Enter your NHR AI Developer Pro licence key here.</p>
                 </div>
 
-                <div className="wpad-form-group">
+                <div className="nhraa-form-group">
                     <label>Claude API Key (Bring Your Own)</label>
                     <input 
                         type="password" 
-                        value={settings.wpad_claude_api_key} 
-                        onChange={(e) => setSettings({...settings, wpad_claude_api_key: e.target.value})} 
+                        value={settings.nhraa_claude_api_key} 
+                        onChange={(e) => setSettings({...settings, nhraa_claude_api_key: e.target.value})} 
                         className="regular-text"
                     />
                     <p className="description">Enter your Anthropic API key to bypass the proxy and use the AI directly.</p>
