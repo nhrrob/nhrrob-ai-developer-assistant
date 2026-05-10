@@ -1,5 +1,6 @@
 .wpad-react-wrap {
     display: flex;
+    flex-direction: column;
     margin: 20px 20px 0 0;
     background: #fff;
     min-height: calc(100vh - 100px);
@@ -8,20 +9,19 @@
     overflow: hidden;
 }
 
-.wpad-sidebar {
-    width: 250px;
+.wpad-topbar {
+    display: flex;
+    align-items: center;
     background: #f8f9fa;
-    border-right: 1px solid #e2e8f0;
-    padding: 20px 0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 20px;
 }
 
 .wpad-logo {
     display: flex;
     align-items: center;
-    padding: 0 20px 20px;
-    border-bottom: 1px solid #e2e8f0;
-    margin-bottom: 10px;
     color: #6366f1;
+    margin-right: 40px;
 }
 
 .wpad-logo h2 {
@@ -31,6 +31,7 @@
 }
 
 .wpad-nav {
+    display: flex;
     list-style: none;
     margin: 0;
     padding: 0;
@@ -43,31 +44,28 @@
 .wpad-nav button {
     display: flex;
     align-items: center;
-    width: 100%;
-    text-align: left;
     background: transparent;
     border: none;
-    padding: 15px 20px;
+    padding: 20px 20px;
     font-size: 15px;
     cursor: pointer;
     color: #475569;
     transition: all 0.2s;
+    border-bottom: 3px solid transparent;
 }
 
 .wpad-nav button:hover {
-    background: #e2e8f0;
     color: #1e293b;
 }
 
 .wpad-nav button.active {
-    background: #ebf4ff;
     color: #2563eb;
-    border-right: 3px solid #2563eb;
+    border-bottom: 3px solid #2563eb;
     font-weight: 500;
 }
 
 .wpad-nav button .dashicons {
-    margin-right: 10px;
+    margin-right: 8px;
 }
 
 .wpad-content {
