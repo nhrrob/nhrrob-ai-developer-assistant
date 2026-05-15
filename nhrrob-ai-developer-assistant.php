@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NHR AI Developer Assistant
  * Description: Gives site owners a personal AI developer inside their WordPress admin.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: Nazmul Hasan Robin
  * Text Domain: nhrrob-ai-developer-assistant
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
-define( 'NHRADA_VERSION', '1.0.1' );
+define( 'NHRADA_VERSION', '1.1.0' );
 define( 'NHRADA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NHRADA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

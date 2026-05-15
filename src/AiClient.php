@@ -18,6 +18,14 @@ class AiClient {
      * @param array  $conversation_history  Previous messages [['role'=>'user','content'=>'...'], ...]
      */
     public function send_request( $user_message, $context, $conversation_history = array() ) {
+        // Use WP 7.0+ native AI client when available and configured.
+        if ( function_exists( 'wp_supports_ai' ) && wp_supports_ai() ) {
+            $builder = wp_ai_client_prompt();
+            if ( $builder->is_supported_for_text_generation() ) {
+                return $this->call_wp_ai_client( $user_message, $context, $conversation_history );
+            }
+        }
+
         $provider = get_option( 'nhrada_ai_provider', 'claude' );
 
         if ( 'openai' === $provider ) {
@@ -38,6 +46,50 @@ class AiClient {
         }
 
         return $this->call_backend( $user_message, $context, $conversation_history );
+    }
+
+    /**
+     * Call the WordPress 7.0+ native AI client.
+     * Declares model preferences but lets WP route to whatever is configured.
+     */
+    private function call_wp_ai_client( $user_message, $context, $history ) {
+        $system_prompt = $this->build_system_prompt( $context );
+
+        // Convert flat history arrays to WP Message objects (role: user|model, not user|assistant).
+        $history_messages = array();
+        foreach ( $history as $h ) {
+            if ( ! in_array( $h['role'], array( 'user', 'assistant' ), true ) ) {
+                continue;
+            }
+            $role = 'assistant' === $h['role'] ? 'model' : 'user';
+            try {
+                $history_messages[] = \WordPress\AiClient\Messages\DTO\Message::fromArray( array(
+                    'role'  => $role,
+                    'parts' => array( array( 'type' => 'text', 'text' => $h['content'] ) ),
+                ) );
+            } catch ( \Exception $e ) {
+                // Skip malformed history entries.
+                continue;
+            }
+        }
+
+        $builder = wp_ai_client_prompt()
+            ->using_system_instruction( $system_prompt )
+            ->using_model_preference( self::CLAUDE_MODEL, self::OPENAI_MODEL, self::GEMINI_MODEL )
+            ->using_max_tokens( 4000 );
+
+        if ( ! empty( $history_messages ) ) {
+            $builder = $builder->with_history( ...$history_messages );
+        }
+
+        $text = $builder->with_text( $user_message )->generate_text();
+
+        if ( is_wp_error( $text ) ) {
+            $this->maybe_debug_log( 'WP AI Client error: ' . $text->get_error_message() );
+            return array( 'error' => $text->get_error_message() );
+        }
+
+        return $this->parse_text_response( $text );
     }
 
     /**

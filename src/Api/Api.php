@@ -254,13 +254,17 @@ class Api {
      * GET /settings
      */
     public function get_settings( WP_REST_Request $request ) {
+        $wp_ai_available = function_exists( 'wp_supports_ai' ) && wp_supports_ai()
+            && wp_ai_client_prompt()->is_supported_for_text_generation();
+
         return rest_ensure_response( array(
-            'nhrada_licence_key'    => get_option( 'nhrada_licence_key', '' ),
-            'nhrada_ai_provider'    => get_option( 'nhrada_ai_provider', 'claude' ),
-            'nhrada_claude_api_key' => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
-            'nhrada_openai_api_key' => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
-            'nhrada_gemini_api_key' => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
-            'nhrada_debug_mode'     => (bool) get_option( 'nhrada_debug_mode', false ),
+            'nhrada_licence_key'      => get_option( 'nhrada_licence_key', '' ),
+            'nhrada_ai_provider'      => get_option( 'nhrada_ai_provider', 'claude' ),
+            'nhrada_claude_api_key'   => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
+            'nhrada_openai_api_key'   => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
+            'nhrada_gemini_api_key'   => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
+            'nhrada_debug_mode'       => (bool) get_option( 'nhrada_debug_mode', false ),
+            'wp_ai_client_available'  => $wp_ai_available,
         ) );
     }
 

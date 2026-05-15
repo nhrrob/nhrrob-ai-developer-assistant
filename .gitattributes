@@ -80,3 +80,4 @@ postcss.config.js       export-ignore
 
 # Project Specific
 wp-ai-developer-assistant-prd.md export-ignore
+CLAUDE.md                         export-ignore
