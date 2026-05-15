@@ -33,7 +33,7 @@ User message (React UI)
 
 1. **WP 7.0 native** (`wp_supports_ai()` + `is_supported_for_text_generation()`) — no API key needed
 2. **BYOK** — user-supplied key for the selected provider (`nhrada_ai_provider`: `claude`, `openai`, `gemini`)
-3. **Backend proxy** (`BACKEND_URL`) — licence-key-authenticated SaaS fallback
+3. **Error** — clear message asking the user to configure a provider
 
 The native WP client uses `using_model_preference(CLAUDE_MODEL, OPENAI_MODEL, GEMINI_MODEL)` — preferences only, never hardcode a required provider.
 
@@ -73,9 +73,9 @@ Three tables created on activation (`Activator::activate()`):
 - `{prefix}nhrada_snapshots` — before/after values per change, keyed by `change_id`
 - `{prefix}nhrada_messages` — chat history (role `user|assistant`, linked to `change_id`)
 
-### Licence / Usage Gating
+### Free Plugin
 
-`Licence` is an MVP stub. A key longer than 10 chars = `pro` (unlimited). Free = 10 requests/month, stored as `nhrada_usage_Y_m` WP option. Usage is only incremented for actionable changes (`change_type !== 'none'`).
+This is a free plugin with no usage limits, no licence keys, and no SaaS backend. `Licence.php` exists as an empty stub only. Do not add paid-tier gating, upgrade prompts, or external proxy calls — those belong in a separate Pro plugin.
 
 ### Frontend
 

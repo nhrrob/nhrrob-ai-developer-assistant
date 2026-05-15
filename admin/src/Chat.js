@@ -35,7 +35,6 @@ const Chat = () => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [usageInfo, setUsageInfo] = useState(null);
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
     const messagesAreaRef = useRef(null);
@@ -44,7 +43,6 @@ const Chat = () => {
         apiFetch({ path: '/nhrada/v1/messages' })
             .then(res => {
                 setMessages(res.messages || []);
-                setUsageInfo(res.usage || null);
                 setInitialLoading(false);
             })
             .catch(() => setInitialLoading(false));
@@ -72,16 +70,6 @@ const Chat = () => {
         }).then(res => {
             setLoading(false);
 
-            if (res.upgrade_required) {
-                setMessages(prev => [...prev, {
-                    role: 'assistant',
-                    content: res.message,
-                    id: `assistant-${Date.now()}`,
-                    upgrade_required: true,
-                }]);
-                return;
-            }
-
             const displayMsg = res.confirmation_message || res.message || 'Done.';
             setMessages(prev => [...prev, {
                 role: 'assistant',
@@ -92,7 +80,6 @@ const Chat = () => {
                 is_error: !res.confirmation_message && !!res.message,
             }]);
 
-            if (res.usage) setUsageInfo(res.usage);
             setTimeout(() => inputRef.current?.focus(), 50);
         }).catch(() => {
             setLoading(false);
@@ -194,11 +181,6 @@ const Chat = () => {
                                         </p>
                                     )}
                                 </div>
-                                {msg.upgrade_required && (
-                                    <a href="#" className="nhrada-upgrade-cta">
-                                        Upgrade to Pro — unlimited requests for $9/mo →
-                                    </a>
-                                )}
                                 {msg.change_id && !msg.undone && (
                                     <button
                                         className="nhrada-undo-btn"
@@ -234,15 +216,6 @@ const Chat = () => {
             </div>
 
             <div className="nhrada-input-zone">
-                {usageInfo && usageInfo.plan === 'free' && (
-                    <div className="nhrada-usage-strip">
-                        <div
-                            className="nhrada-usage-bar"
-                            style={{ width: `${Math.min(100, (usageInfo.used / usageInfo.limit) * 100)}%` }}
-                        />
-                        <span>{usageInfo.used} of {usageInfo.limit} free requests used this month</span>
-                    </div>
-                )}
                 <div className="nhrada-input-row">
                     <div className={`nhrada-input-wrap${overLimit ? ' nhrada-input-wrap--over' : ''}`}>
                         <textarea

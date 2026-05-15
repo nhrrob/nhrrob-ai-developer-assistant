@@ -1,10 +1,15 @@
 <?php
 /**
  * Plugin Name: NHR AI Developer Assistant
- * Description: Gives site owners a personal AI developer inside their WordPress admin.
+ * Description: Gives site owners a personal AI developer inside their WordPress admin. Describe a change in plain English and the assistant implements it — CSS, JS, PHP snippets, or site options — with full undo support.
  * Version: 1.1.0
  * Author: Nazmul Hasan Robin
+ * Author URI: https://nhrrob.com
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: nhrrob-ai-developer-assistant
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

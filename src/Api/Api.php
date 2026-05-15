@@ -5,7 +5,6 @@ use NHR\AIDeveloperAssistant\Context;
 use NHR\AIDeveloperAssistant\AiClient;
 use NHR\AIDeveloperAssistant\Executor;
 use NHR\AIDeveloperAssistant\Undo;
-use NHR\AIDeveloperAssistant\Licence;
 use WP_REST_Request;
 use WP_Error;
 
@@ -71,7 +70,7 @@ class Api {
     }
 
     /**
-     * GET /messages — load recent chat messages + usage info.
+     * GET /messages — load recent chat messages.
      */
     public function get_messages( WP_REST_Request $request ) {
         global $wpdb;
@@ -84,23 +83,15 @@ class Api {
             ARRAY_A
         );
 
-        // Return in chronological order
         $messages = array_reverse( $rows );
 
-        // Cast IDs
         foreach ( $messages as &$msg ) {
             $msg['id']        = (int) $msg['id'];
             $msg['change_id'] = $msg['change_id'] ? (int) $msg['change_id'] : null;
         }
         unset( $msg );
 
-        $licence = new Licence();
-        $usage   = $this->get_usage_info( $licence );
-
-        return rest_ensure_response( array(
-            'messages' => $messages,
-            'usage'    => $usage,
-        ) );
+        return rest_ensure_response( array( 'messages' => $messages ) );
     }
 
     /**
@@ -112,19 +103,6 @@ class Api {
         $message = sanitize_text_field( $request->get_param( 'message' ) );
         if ( empty( $message ) ) {
             return new WP_Error( 'empty_message', 'Message cannot be empty.', array( 'status' => 400 ) );
-        }
-
-        $licence = new Licence();
-
-        // Enforce usage limit for free users
-        if ( ! $licence->check_usage() ) {
-            $current_month = gmdate( 'Y_m' );
-            $used          = (int) get_option( 'nhrada_usage_' . $current_month, 0 );
-            return rest_ensure_response( array(
-                'upgrade_required' => true,
-                'message'          => "You've used your {$used} free requests this month. Upgrade to Pro for unlimited requests — just \$9/month.",
-                'usage'            => $this->get_usage_info( $licence ),
-            ) );
         }
 
         // Log the user message
@@ -195,17 +173,12 @@ class Api {
 
         $wpdb->insert( $wpdb->prefix . 'nhrada_messages', $assistant_data, $assistant_format );
 
-        // Increment usage for successful responses (skip 'none' type — informational only)
         $change_type = isset( $ai_response['change_type'] ) ? $ai_response['change_type'] : 'none';
-        if ( 'none' !== $change_type && ! empty( $ai_response['can_do'] ) ) {
-            $licence->increment_usage();
-        }
 
         $response = array(
             'confirmation_message' => $display_msg,
             'change_type'          => $change_type,
             'warnings'             => isset( $ai_response['warnings'] ) ? $ai_response['warnings'] : null,
-            'usage'                => $this->get_usage_info( $licence ),
         );
 
         if ( is_numeric( $change_id ) ) {
@@ -258,13 +231,12 @@ class Api {
             && wp_ai_client_prompt()->is_supported_for_text_generation();
 
         return rest_ensure_response( array(
-            'nhrada_licence_key'      => get_option( 'nhrada_licence_key', '' ),
-            'nhrada_ai_provider'      => get_option( 'nhrada_ai_provider', 'claude' ),
-            'nhrada_claude_api_key'   => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
-            'nhrada_openai_api_key'   => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
-            'nhrada_gemini_api_key'   => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
-            'nhrada_debug_mode'       => (bool) get_option( 'nhrada_debug_mode', false ),
-            'wp_ai_client_available'  => $wp_ai_available,
+            'nhrada_ai_provider'     => get_option( 'nhrada_ai_provider', 'claude' ),
+            'nhrada_claude_api_key'  => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
+            'nhrada_openai_api_key'  => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
+            'nhrada_gemini_api_key'  => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
+            'nhrada_debug_mode'      => (bool) get_option( 'nhrada_debug_mode', false ),
+            'wp_ai_client_available' => $wp_ai_available,
         ) );
     }
 
@@ -273,10 +245,6 @@ class Api {
      */
     public function save_settings( WP_REST_Request $request ) {
         $params = $request->get_json_params();
-
-        if ( isset( $params['nhrada_licence_key'] ) ) {
-            update_option( 'nhrada_licence_key', sanitize_text_field( $params['nhrada_licence_key'] ) );
-        }
 
         $allowed_providers = array( 'claude', 'openai', 'gemini' );
         if ( isset( $params['nhrada_ai_provider'] ) && in_array( $params['nhrada_ai_provider'], $allowed_providers, true ) ) {
@@ -311,26 +279,4 @@ class Api {
         return rest_ensure_response( array( 'success' => true ) );
     }
 
-    /**
-     * Build usage info array.
-     */
-    private function get_usage_info( Licence $licence ) {
-        $plan = $licence->get_plan();
-        if ( 'pro' === $plan ) {
-            return array(
-                'plan'  => 'pro',
-                'used'  => null,
-                'limit' => null,
-            );
-        }
-
-        $current_month = gmdate( 'Y_m' );
-        $used          = (int) get_option( 'nhrada_usage_' . $current_month, 0 );
-
-        return array(
-            'plan'  => 'free',
-            'used'  => $used,
-            'limit' => 10,
-        );
-    }
 }

@@ -7,10 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AiClient {
 
-    const CLAUDE_MODEL  = 'claude-sonnet-4-6';
-    const OPENAI_MODEL  = 'gpt-4o-mini';
-    const GEMINI_MODEL  = 'gemini-2.0-flash';
-    const BACKEND_URL   = 'https://your-backend.com/api/chat';
+    const CLAUDE_MODEL = 'claude-sonnet-4-6';
+    const OPENAI_MODEL = 'gpt-4o-mini';
+    const GEMINI_MODEL = 'gemini-2.0-flash';
 
     /**
      * @param string $user_message
@@ -45,7 +44,7 @@ class AiClient {
             }
         }
 
-        return $this->call_backend( $user_message, $context, $conversation_history );
+        return array( 'error' => 'No AI provider configured. Please add an API key in AI Developer > Settings, or configure a WordPress AI provider.' );
     }
 
     /**
@@ -237,52 +236,6 @@ class AiClient {
             ? $data['candidates'][0]['content']['parts'][0]['text']
             : null;
         return $this->parse_text_response( $text );
-    }
-
-    /**
-     * Call the SaaS proxy backend (licence-based flow).
-     */
-    private function call_backend( $user_message, $context, $history ) {
-        $messages = array();
-        foreach ( $history as $h ) {
-            $messages[] = array(
-                'role'    => $h['role'],
-                'content' => $h['content'],
-            );
-        }
-
-        $body = array(
-            'messages'     => $messages,
-            'context'      => $context,
-            'user_message' => $user_message,
-        );
-
-        $response = wp_remote_post( self::BACKEND_URL, array(
-            'headers' => array(
-                'Content-Type'  => 'application/json',
-                'X-Licence-Key' => get_option( 'nhrada_licence_key', '' ),
-                'X-Site-URL'    => get_site_url(),
-            ),
-            'body'    => wp_json_encode( $body ),
-            'timeout' => 45,
-        ) );
-
-        if ( is_wp_error( $response ) ) {
-            return array( 'error' => 'Backend connection error: ' . $response->get_error_message() );
-        }
-
-        $status   = wp_remote_retrieve_response_code( $response );
-        $raw_body = wp_remote_retrieve_body( $response );
-        $data     = json_decode( $raw_body, true );
-
-        if ( $status !== 200 ) {
-            $err = isset( $data['message'] ) ? $data['message'] : 'Backend error (HTTP ' . $status . ')';
-            return array( 'error' => $err );
-        }
-
-        return isset( $data['response'] )
-            ? $data['response']
-            : array( 'error' => 'Invalid backend response format.' );
     }
 
     /**

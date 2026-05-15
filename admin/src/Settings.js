@@ -11,13 +11,13 @@ const Field = ({ label, description, children }) => (
 
 const Settings = () => {
     const [settings, setSettings] = useState({
-        nhrada_licence_key: '',
         nhrada_ai_provider: 'claude',
         nhrada_claude_api_key: '',
         nhrada_openai_api_key: '',
         nhrada_gemini_api_key: '',
         nhrada_debug_mode: false,
     });
+    const [wpAiAvailable, setWpAiAvailable] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [notice, setNotice] = useState(null);
@@ -29,13 +29,13 @@ const Settings = () => {
         apiFetch({ path: '/nhrada/v1/settings' })
             .then(res => {
                 setSettings({
-                    nhrada_licence_key: res.nhrada_licence_key || '',
                     nhrada_ai_provider: res.nhrada_ai_provider || 'claude',
                     nhrada_claude_api_key: res.nhrada_claude_api_key || '',
                     nhrada_openai_api_key: res.nhrada_openai_api_key || '',
                     nhrada_gemini_api_key: res.nhrada_gemini_api_key || '',
                     nhrada_debug_mode: !!res.nhrada_debug_mode,
                 });
+                setWpAiAvailable(!!res.wp_ai_client_available);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -106,21 +106,13 @@ const Settings = () => {
 
             <form onSubmit={handleSave}>
                 <div className="nhrada-settings-section">
-                    <h2 className="nhrada-section-title">Licence & API</h2>
+                    <h2 className="nhrada-section-title">AI Provider</h2>
 
-                    <Field
-                        label="Pro Licence Key"
-                        description="Enter your NHR AI Developer Pro licence key to unlock unlimited requests and all change types."
-                    >
-                        <input
-                            type="text"
-                            className="nhrada-input-text"
-                            value={settings.nhrada_licence_key}
-                            onChange={e => set('nhrada_licence_key', e.target.value)}
-                            placeholder="XXXX-XXXX-XXXX-XXXX"
-                            autoComplete="off"
-                        />
-                    </Field>
+                    {wpAiAvailable && (
+                        <div className="nhrada-notice nhrada-notice--success">
+                            WordPress AI is active — no API key required. The fields below are used as a fallback if WordPress AI becomes unavailable.
+                        </div>
+                    )}
 
                     <Field
                         label="AI Provider"
@@ -242,30 +234,6 @@ const Settings = () => {
                 </div>
             </div>
 
-            <div className="nhrada-settings-section">
-                <h2 className="nhrada-section-title">About</h2>
-                <div className="nhrada-about-grid">
-                    <div className="nhrada-about-card">
-                        <strong>Free Plan</strong>
-                        <ul>
-                            <li>10 AI requests / month</li>
-                            <li>CSS &amp; JS changes</li>
-                            <li>Undo any change</li>
-                        </ul>
-                    </div>
-                    <div className="nhrada-about-card nhrada-about-card--pro">
-                        <strong>Pro Plan — $9/mo</strong>
-                        <ul>
-                            <li>Unlimited requests</li>
-                            <li>CSS, JS, PHP &amp; option changes</li>
-                            <li>Full change history</li>
-                            <li>Bring your own API key</li>
-                            <li>Priority support</li>
-                        </ul>
-                        <a href="#" className="nhrada-btn-primary nhrada-btn-sm">Upgrade Now</a>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
