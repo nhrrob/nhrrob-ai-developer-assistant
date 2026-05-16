@@ -1,7 +1,7 @@
 <?php
-namespace NHR\AIDeveloperAssistant;
+namespace Nhrada\AIDeveloperAssistant;
 
-use NHR\AIDeveloperAssistant\Database\Changelog;
+use Nhrada\AIDeveloperAssistant\Database\Changelog;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;

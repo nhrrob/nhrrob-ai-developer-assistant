@@ -9,13 +9,13 @@ npm run build   # production build → admin/build/
 npm run start   # development watch mode
 ```
 
-PHP has no build step. Composer autoload is pre-generated; run `composer dump-autoload` only when adding new classes to `src/`.
+PHP has no build step. Composer autoload is pre-generated; run `composer dump-autoload` only when adding new classes to `includes/`.
 
 ## Architecture
 
 ### Boot Flow
 
-`nhrrob-ai-developer-assistant.php` → `plugins_loaded` → `Plugin::init()` → registers `Admin` (admin only) and `Api` (always), outputs custom JS in footer, and `require_once`s `wp-content/nhrada-snippets.php` if it exists.
+`nhrrob-ai-developer-assistant.php` → `Nhrada_AI_Developer_Assistant::init()` (singleton) → `plugins_loaded` → `init_plugin()` → registers `Admin` (admin only) and `Api` (always), outputs custom JS in footer, and `require_once`s `wp-content/nhrada-snippets.php` if it exists.
 
 ### Request Flow (the core loop)
 
@@ -83,7 +83,8 @@ React SPA built with `@wordpress/scripts`. Entry: `admin/src/index.js`, output: 
 
 ## Key Conventions
 
-- Namespace: `NHR\AIDeveloperAssistant` (PSR-4 from `src/`)
+- Main class: `Nhrada_AI_Developer_Assistant` (singleton in main plugin file)
+- Namespace: `Nhrada\AIDeveloperAssistant` (PSR-4 from `includes/`)
 - Constant prefix: `NHRADA_`
 - Option prefix: `nhrada_`
 - DB table prefix: `nhrada_` (after `$wpdb->prefix`)

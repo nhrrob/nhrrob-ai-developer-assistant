@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'NHR\\AIDeveloperAssistant\\' => array($baseDir . '/src'),
+    'Nhrada\\AIDeveloperAssistant\\' => array($baseDir . '/includes'),
 );

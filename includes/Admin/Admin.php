@@ -1,5 +1,5 @@
 <?php
-namespace NHR\AIDeveloperAssistant\Admin;
+namespace Nhrada\AIDeveloperAssistant\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -45,7 +45,7 @@ class Admin {
 
         wp_enqueue_script(
             'nhrada-app',
-            NHRADA_PLUGIN_URL . 'admin/build/index.js',
+            NHRADA_URL . 'admin/build/index.js',
             $assets['dependencies'],
             $assets['version'],
             true
@@ -53,7 +53,7 @@ class Admin {
 
         wp_enqueue_style(
             'nhrada-app-css',
-            NHRADA_PLUGIN_URL . 'admin/build/style-index.css',
+            NHRADA_URL . 'admin/build/style-index.css',
             array(),
             $assets['version']
         );
@@ -64,7 +64,7 @@ class Admin {
     }
 
     public function plugin_action_links( $links, $file ) {
-        if ( plugin_basename( NHRADA_PLUGIN_DIR . 'nhrrob-ai-developer-assistant.php' ) === $file ) {
+        if ( plugin_basename( NHRADA_FILE ) === $file ) {
             $settings_link = sprintf(
                 '<a href="%s">%s</a>',
                 admin_url( 'admin.php?page=nhrada-settings' ),

@@ -1,5 +1,5 @@
 <?php
-namespace NHR\AIDeveloperAssistant;
+namespace Nhrada\AIDeveloperAssistant;
 
 use WP_Error;
 

@@ -1,5 +1,5 @@
 <?php
-namespace NHR\AIDeveloperAssistant\Database;
+namespace Nhrada\AIDeveloperAssistant\Database;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;

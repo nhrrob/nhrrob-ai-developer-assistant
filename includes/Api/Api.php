@@ -1,10 +1,10 @@
 <?php
-namespace NHR\AIDeveloperAssistant\Api;
+namespace Nhrada\AIDeveloperAssistant\Api;
 
-use NHR\AIDeveloperAssistant\Context;
-use NHR\AIDeveloperAssistant\AiClient;
-use NHR\AIDeveloperAssistant\Executor;
-use NHR\AIDeveloperAssistant\Undo;
+use Nhrada\AIDeveloperAssistant\Context;
+use Nhrada\AIDeveloperAssistant\AiClient;
+use Nhrada\AIDeveloperAssistant\Executor;
+use Nhrada\AIDeveloperAssistant\Undo;
 use WP_REST_Request;
 use WP_Error;
 
