@@ -240,16 +240,18 @@ class Api {
         $wp_ai_available = function_exists( 'wp_supports_ai' ) && wp_supports_ai()
             && wp_ai_client_prompt()->is_supported_for_text_generation();
 
+        $settings = get_option( 'nhrada_settings', array() );
+
         return rest_ensure_response( array(
-            'nhrada_ai_provider'     => get_option( 'nhrada_ai_provider', 'claude' ),
-            'nhrada_claude_api_key'  => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
-            'nhrada_openai_api_key'  => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
-            'nhrada_gemini_api_key'  => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
-            'nhrada_claude_model'    => get_option( 'nhrada_claude_model', '' ),
-            'nhrada_openai_model'    => get_option( 'nhrada_openai_model', '' ),
-            'nhrada_gemini_model'    => get_option( 'nhrada_gemini_model', '' ),
-            'nhrada_custom_instructions' => get_option( 'nhrada_custom_instructions', '' ),
-            'nhrada_debug_mode'          => (bool) get_option( 'nhrada_debug_mode', false ),
+            'nhrada_ai_provider'         => isset( $settings['ai_provider'] ) ? $settings['ai_provider'] : 'claude',
+            'nhrada_claude_api_key'      => ! empty( $settings['claude_api_key'] ) ? '***' : '',
+            'nhrada_openai_api_key'      => ! empty( $settings['openai_api_key'] ) ? '***' : '',
+            'nhrada_gemini_api_key'      => ! empty( $settings['gemini_api_key'] ) ? '***' : '',
+            'nhrada_claude_model'        => isset( $settings['claude_model'] ) ? $settings['claude_model'] : '',
+            'nhrada_openai_model'        => isset( $settings['openai_model'] ) ? $settings['openai_model'] : '',
+            'nhrada_gemini_model'        => isset( $settings['gemini_model'] ) ? $settings['gemini_model'] : '',
+            'nhrada_custom_instructions' => isset( $settings['custom_instructions'] ) ? $settings['custom_instructions'] : '',
+            'nhrada_debug_mode'          => ! empty( $settings['debug_mode'] ),
             'wp_ai_client_available'     => $wp_ai_available,
         ) );
     }
@@ -258,48 +260,37 @@ class Api {
      * POST /settings
      */
     public function save_settings( WP_REST_Request $request ) {
-        $params = $request->get_json_params();
+        $params   = $request->get_json_params();
+        $settings = get_option( 'nhrada_settings', array() );
 
         $allowed_providers = array( 'claude', 'openai', 'gemini' );
         if ( isset( $params['nhrada_ai_provider'] ) && in_array( $params['nhrada_ai_provider'], $allowed_providers, true ) ) {
-            update_option( 'nhrada_ai_provider', $params['nhrada_ai_provider'] );
+            $settings['ai_provider'] = $params['nhrada_ai_provider'];
         }
 
-        if ( isset( $params['nhrada_claude_api_key'] ) && '***' !== $params['nhrada_claude_api_key'] ) {
-            update_option( 'nhrada_claude_api_key', sanitize_text_field( $params['nhrada_claude_api_key'] ) );
-            delete_transient( 'nhrada_models_claude' );
-        }
+        foreach ( $allowed_providers as $provider ) {
+            $key = 'nhrada_' . $provider . '_api_key';
+            if ( isset( $params[ $key ] ) && '***' !== $params[ $key ] ) {
+                $settings[ $provider . '_api_key' ] = sanitize_text_field( $params[ $key ] );
+                delete_transient( 'nhrada_models_' . $provider );
+            }
 
-        if ( isset( $params['nhrada_openai_api_key'] ) && '***' !== $params['nhrada_openai_api_key'] ) {
-            update_option( 'nhrada_openai_api_key', sanitize_text_field( $params['nhrada_openai_api_key'] ) );
-            delete_transient( 'nhrada_models_openai' );
-        }
-
-        if ( isset( $params['nhrada_gemini_api_key'] ) && '***' !== $params['nhrada_gemini_api_key'] ) {
-            update_option( 'nhrada_gemini_api_key', sanitize_text_field( $params['nhrada_gemini_api_key'] ) );
-            delete_transient( 'nhrada_models_gemini' );
-        }
-
-        if ( isset( $params['nhrada_claude_model'] ) ) {
-            update_option( 'nhrada_claude_model', sanitize_text_field( $params['nhrada_claude_model'] ) );
-        }
-
-        if ( isset( $params['nhrada_openai_model'] ) ) {
-            update_option( 'nhrada_openai_model', sanitize_text_field( $params['nhrada_openai_model'] ) );
-        }
-
-        if ( isset( $params['nhrada_gemini_model'] ) ) {
-            update_option( 'nhrada_gemini_model', sanitize_text_field( $params['nhrada_gemini_model'] ) );
+            $model_key = 'nhrada_' . $provider . '_model';
+            if ( isset( $params[ $model_key ] ) ) {
+                $settings[ $provider . '_model' ] = sanitize_text_field( $params[ $model_key ] );
+            }
         }
 
         if ( isset( $params['nhrada_custom_instructions'] ) ) {
-            $instructions = sanitize_textarea_field( $params['nhrada_custom_instructions'] );
-            update_option( 'nhrada_custom_instructions', substr( $instructions, 0, 2000 ) );
+            $instructions                  = sanitize_textarea_field( $params['nhrada_custom_instructions'] );
+            $settings['custom_instructions'] = substr( $instructions, 0, 2000 );
         }
 
         if ( isset( $params['nhrada_debug_mode'] ) ) {
-            update_option( 'nhrada_debug_mode', (bool) $params['nhrada_debug_mode'] );
+            $settings['debug_mode'] = (bool) $params['nhrada_debug_mode'];
         }
+
+        update_option( 'nhrada_settings', $settings );
 
         return rest_ensure_response( array( 'success' => true ) );
     }

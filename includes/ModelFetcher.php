@@ -22,7 +22,8 @@ class ModelFetcher {
             }
         }
 
-        $api_key = get_option( 'nhrada_' . $provider . '_api_key', '' );
+        $settings = get_option( 'nhrada_settings', array() );
+        $api_key  = isset( $settings[ $provider . '_api_key' ] ) ? $settings[ $provider . '_api_key' ] : '';
         if ( empty( $api_key ) ) {
             return $this->get_static( $provider );
         }
@@ -167,7 +168,8 @@ class ModelFetcher {
     }
 
     private function debug_log( $message ) {
-        if ( get_option( 'nhrada_debug_mode' ) ) {
+        $settings = get_option( 'nhrada_settings', array() );
+        if ( ! empty( $settings['debug_mode'] ) ) {
             error_log( '[NHRAA] ' . $message );
         }
     }

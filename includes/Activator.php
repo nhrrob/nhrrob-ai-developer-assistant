@@ -7,7 +7,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Activator {
 
+    public static function maybe_migrate_settings() {
+        if ( false !== get_option( 'nhrada_settings' ) ) {
+            return;
+        }
+        $legacy = array(
+            'ai_provider'         => 'nhrada_ai_provider',
+            'claude_api_key'      => 'nhrada_claude_api_key',
+            'openai_api_key'      => 'nhrada_openai_api_key',
+            'gemini_api_key'      => 'nhrada_gemini_api_key',
+            'claude_model'        => 'nhrada_claude_model',
+            'openai_model'        => 'nhrada_openai_model',
+            'gemini_model'        => 'nhrada_gemini_model',
+            'custom_instructions' => 'nhrada_custom_instructions',
+            'debug_mode'          => 'nhrada_debug_mode',
+        );
+        $settings = array();
+        foreach ( $legacy as $new_key => $old_key ) {
+            $value = get_option( $old_key, null );
+            if ( null !== $value ) {
+                $settings[ $new_key ] = $value;
+            }
+            delete_option( $old_key );
+        }
+        update_option( 'nhrada_settings', $settings );
+    }
+
     public static function activate() {
+        self::maybe_migrate_settings();
         global $wpdb;
 
         $charset_collate = $wpdb->get_charset_collate();

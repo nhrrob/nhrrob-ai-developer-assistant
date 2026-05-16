@@ -22,7 +22,8 @@ class PromptBuilder {
         $plugin_list = isset( $context['plugin_list'] ) ? $context['plugin_list'] : 'unknown';
         $error_log   = isset( $context['error_log'] ) ? $context['error_log'] : 'N/A';
 
-        $custom = sanitize_textarea_field( get_option( 'nhrada_custom_instructions', '' ) );
+        $settings = get_option( 'nhrada_settings', array() );
+        $custom   = sanitize_textarea_field( isset( $settings['custom_instructions'] ) ? $settings['custom_instructions'] : '' );
         $custom_block = ! empty( $custom ) ? "\n\nSite admin notes:\n{$custom}" : '';
 
         return "You are an expert WordPress developer embedded as an AI assistant inside a WordPress admin panel. You help non-technical site owners implement changes to their website using plain English.

@@ -19,20 +19,21 @@ class AiClient {
             }
         }
 
-        $provider = get_option( 'nhrada_ai_provider', 'claude' );
+        $settings = get_option( 'nhrada_settings', array() );
+        $provider = isset( $settings['ai_provider'] ) ? $settings['ai_provider'] : 'claude';
 
         if ( 'openai' === $provider ) {
-            $api_key = get_option( 'nhrada_openai_api_key' );
+            $api_key = isset( $settings['openai_api_key'] ) ? $settings['openai_api_key'] : '';
             if ( ! empty( $api_key ) ) {
                 return $this->call_openai( $api_key, $user_message, $context, $conversation_history );
             }
         } elseif ( 'gemini' === $provider ) {
-            $api_key = get_option( 'nhrada_gemini_api_key' );
+            $api_key = isset( $settings['gemini_api_key'] ) ? $settings['gemini_api_key'] : '';
             if ( ! empty( $api_key ) ) {
                 return $this->call_gemini( $api_key, $user_message, $context, $conversation_history );
             }
         } else {
-            $api_key = get_option( 'nhrada_claude_api_key' );
+            $api_key = isset( $settings['claude_api_key'] ) ? $settings['claude_api_key'] : '';
             if ( ! empty( $api_key ) ) {
                 return $this->call_anthropic( $api_key, $user_message, $context, $conversation_history );
             }
@@ -230,12 +231,14 @@ class AiClient {
             'openai' => self::OPENAI_MODEL,
             'gemini' => self::GEMINI_MODEL,
         );
-        $saved = get_option( 'nhrada_' . $provider . '_model', '' );
+        $settings = get_option( 'nhrada_settings', array() );
+        $saved    = isset( $settings[ $provider . '_model' ] ) ? $settings[ $provider . '_model' ] : '';
         return ! empty( $saved ) ? $saved : $defaults[ $provider ];
     }
 
     private function maybe_debug_log( $message ) {
-        if ( get_option( 'nhrada_debug_mode' ) ) {
+        $settings = get_option( 'nhrada_settings', array() );
+        if ( ! empty( $settings['debug_mode'] ) ) {
             error_log( '[NHRAA] ' . $message );
         }
     }

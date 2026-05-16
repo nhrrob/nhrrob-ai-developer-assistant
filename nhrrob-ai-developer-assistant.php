@@ -98,7 +98,7 @@ final class Nhrada_AI_Developer_Assistant
         $this->load_php_snippets();
     }
 
-    /**
+/**
      * Activate the plugin
      *
      * @return void
