@@ -4,68 +4,66 @@ namespace Nhrada\AIDeveloperAssistant;
 if (!defined('ABSPATH'))
     exit;
 
-/**
- * Assets handler class
- */
 class Assets
 {
 
-    /**
-     * Class constructor
-     */
     public function __construct()
     {
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+        add_action('admin_enqueue_scripts', [$this, 'register_assets']);
         add_action('wp_footer', [$this, 'output_custom_js'], 99);
     }
 
-    /**
-     * Enqueue admin scripts and styles
-     *
-     * @param string $hook Current admin page hook
-     * @return void
-     */
-    public function enqueue_admin_assets($hook)
+    public function get_scripts()
     {
-        if ('toplevel_page_nhrada-settings' !== $hook) {
-            return;
-        }
+        $asset = $this->get_build_asset();
 
-        $asset_file = NHRADA_PLUGIN_DIR . 'admin/build/index.asset.php';
-        if (!file_exists($asset_file)) {
-            return;
-        }
-
-        $assets = require $asset_file;
-
-        wp_enqueue_script(
-            'nhrada-app',
-            NHRADA_URL . 'admin/build/index.js',
-            $assets['dependencies'],
-            $assets['version'],
-            true
-        );
-
-        wp_enqueue_style(
-            'nhrada-app-css',
-            NHRADA_URL . 'admin/build/style-index.css',
-            [],
-            $assets['version']
-        );
+        return [
+            'nhrada-app' => [
+                'src'     => NHRADA_URL . 'admin/build/index.js',
+                'deps'    => $asset['dependencies'],
+                'version' => $asset['version'],
+            ],
+        ];
     }
 
-    /**
-     * Output user-stored custom JS in the frontend footer.
-     * Uses direct output rather than wp_enqueue_script because the code
-     * is dynamic DB content, not a static file with a URL.
-     *
-     * @return void
-     */
+    public function get_styles()
+    {
+        $asset = $this->get_build_asset();
+
+        return [
+            'nhrada-app-css' => [
+                'src'     => NHRADA_URL . 'admin/build/style-index.css',
+                'version' => $asset['version'],
+            ],
+        ];
+    }
+
+    public function register_assets()
+    {
+        foreach ($this->get_scripts() as $handle => $script) {
+            $deps = isset($script['deps']) ? $script['deps'] : [];
+            wp_register_script($handle, $script['src'], $deps, $script['version'], true);
+        }
+
+        foreach ($this->get_styles() as $handle => $style) {
+            $deps = isset($style['deps']) ? $style['deps'] : [];
+            wp_register_style($handle, $style['src'], $deps, $style['version']);
+        }
+    }
+
     public function output_custom_js()
     {
         $js = get_option('nhrada_custom_js', '');
         if (!empty($js)) {
             echo "<script type='text/javascript'>\n" . $js . "\n</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput
         }
+    }
+
+    private function get_build_asset()
+    {
+        $asset_file = NHRADA_PLUGIN_DIR . 'admin/build/index.asset.php';
+        return file_exists($asset_file)
+            ? require $asset_file
+            : ['dependencies' => [], 'version' => NHRADA_VERSION];
     }
 }

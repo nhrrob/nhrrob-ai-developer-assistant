@@ -11,6 +11,176 @@ class AiClient {
     const OPENAI_MODEL = 'gpt-4o-mini';
     const GEMINI_MODEL = 'gemini-2.0-flash';
 
+    private function get_model( $provider ) {
+        $defaults = array(
+            'claude' => self::CLAUDE_MODEL,
+            'openai' => self::OPENAI_MODEL,
+            'gemini' => self::GEMINI_MODEL,
+        );
+        $saved = get_option( 'nhrada_' . $provider . '_model', '' );
+        return ! empty( $saved ) ? $saved : $defaults[ $provider ];
+    }
+
+    /**
+     * Return available models for a provider.
+     * Uses a 24-hour transient cache. Pass $bust = true to force a fresh fetch.
+     * Falls back to a static list if no API key is stored or the fetch fails.
+     */
+    public function fetch_models( $provider, $bust = false ) {
+        $transient = 'nhrada_models_' . $provider;
+
+        if ( ! $bust ) {
+            $cached = get_transient( $transient );
+            if ( false !== $cached ) {
+                return $cached;
+            }
+        }
+
+        $api_key = get_option( 'nhrada_' . $provider . '_api_key', '' );
+        if ( empty( $api_key ) ) {
+            return $this->get_static_models( $provider );
+        }
+
+        switch ( $provider ) {
+            case 'claude':
+                $models = $this->fetch_claude_models( $api_key );
+                break;
+            case 'openai':
+                $models = $this->fetch_openai_models( $api_key );
+                break;
+            case 'gemini':
+                $models = $this->fetch_gemini_models( $api_key );
+                break;
+            default:
+                $models = array();
+        }
+
+        if ( empty( $models ) ) {
+            return $this->get_static_models( $provider );
+        }
+
+        set_transient( $transient, $models, DAY_IN_SECONDS );
+        return $models;
+    }
+
+    private function get_static_models( $provider ) {
+        $map = array(
+            'claude' => array(
+                array( 'id' => 'claude-opus-4-7',           'name' => 'Claude Opus 4.7' ),
+                array( 'id' => 'claude-sonnet-4-7',          'name' => 'Claude Sonnet 4.7' ),
+                array( 'id' => 'claude-sonnet-4-6',          'name' => 'Claude Sonnet 4.6' ),
+                array( 'id' => 'claude-haiku-4-5-20251001',  'name' => 'Claude Haiku 4.5' ),
+            ),
+            'openai' => array(
+                array( 'id' => 'gpt-4o',      'name' => 'GPT-4o' ),
+                array( 'id' => 'gpt-4o-mini', 'name' => 'GPT-4o Mini' ),
+                array( 'id' => 'o1',          'name' => 'o1' ),
+                array( 'id' => 'o1-mini',     'name' => 'o1 Mini' ),
+            ),
+            'gemini' => array(
+                array( 'id' => 'gemini-2.5-pro',   'name' => 'Gemini 2.5 Pro' ),
+                array( 'id' => 'gemini-2.0-flash',  'name' => 'Gemini 2.0 Flash' ),
+                array( 'id' => 'gemini-1.5-pro',   'name' => 'Gemini 1.5 Pro' ),
+                array( 'id' => 'gemini-1.5-flash', 'name' => 'Gemini 1.5 Flash' ),
+            ),
+        );
+        return isset( $map[ $provider ] ) ? $map[ $provider ] : array();
+    }
+
+    private function fetch_claude_models( $api_key ) {
+        $response = wp_remote_get( 'https://api.anthropic.com/v1/models', array(
+            'headers' => array(
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+            ),
+            'timeout' => 15,
+        ) );
+
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            $this->maybe_debug_log( 'Claude models fetch failed' );
+            return array();
+        }
+
+        $data   = json_decode( wp_remote_retrieve_body( $response ), true );
+        $models = array();
+
+        foreach ( isset( $data['data'] ) ? $data['data'] : array() as $model ) {
+            $id = isset( $model['id'] ) ? $model['id'] : '';
+            if ( empty( $id ) ) {
+                continue;
+            }
+            $models[] = array(
+                'id'   => $id,
+                'name' => isset( $model['display_name'] ) ? $model['display_name'] : $id,
+            );
+        }
+
+        return $models;
+    }
+
+    private function fetch_openai_models( $api_key ) {
+        $response = wp_remote_get( 'https://api.openai.com/v1/models', array(
+            'headers' => array( 'Authorization' => 'Bearer ' . $api_key ),
+            'timeout' => 15,
+        ) );
+
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            $this->maybe_debug_log( 'OpenAI models fetch failed' );
+            return array();
+        }
+
+        $data   = json_decode( wp_remote_retrieve_body( $response ), true );
+        $models = array();
+
+        foreach ( isset( $data['data'] ) ? $data['data'] : array() as $model ) {
+            $id = isset( $model['id'] ) ? $model['id'] : '';
+            // Keep only chat-capable models; exclude embeddings, audio, image, moderation variants.
+            if ( ! preg_match( '/^(gpt-|o\d)/', $id ) ) {
+                continue;
+            }
+            if ( preg_match( '/(embedding|whisper|tts|dall-e|moderation|babbage|davinci|realtime|audio|search)/', $id ) ) {
+                continue;
+            }
+            $models[] = array( 'id' => $id, 'name' => $id );
+        }
+
+        usort( $models, function ( $a, $b ) { return strcmp( $b['id'], $a['id'] ); } );
+
+        return $models;
+    }
+
+    private function fetch_gemini_models( $api_key ) {
+        $response = wp_remote_get(
+            'https://generativelanguage.googleapis.com/v1beta/models?key=' . rawurlencode( $api_key ),
+            array( 'timeout' => 15 )
+        );
+
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            $this->maybe_debug_log( 'Gemini models fetch failed' );
+            return array();
+        }
+
+        $data   = json_decode( wp_remote_retrieve_body( $response ), true );
+        $models = array();
+
+        foreach ( isset( $data['models'] ) ? $data['models'] : array() as $model ) {
+            $methods = isset( $model['supportedGenerationMethods'] ) ? $model['supportedGenerationMethods'] : array();
+            if ( ! in_array( 'generateContent', $methods, true ) ) {
+                continue;
+            }
+            $id = str_replace( 'models/', '', isset( $model['name'] ) ? $model['name'] : '' );
+            if ( empty( $id ) ) {
+                continue;
+            }
+            $models[] = array(
+                'id'   => $id,
+                'name' => isset( $model['displayName'] ) ? $model['displayName'] : $id,
+            );
+        }
+
+        return $models;
+    }
+
     /**
      * @param string $user_message
      * @param array  $context
@@ -74,7 +244,7 @@ class AiClient {
 
         $builder = wp_ai_client_prompt()
             ->using_system_instruction( $system_prompt )
-            ->using_model_preference( self::CLAUDE_MODEL, self::OPENAI_MODEL, self::GEMINI_MODEL )
+            ->using_model_preference( $this->get_model( 'claude' ), $this->get_model( 'openai' ), $this->get_model( 'gemini' ) )
             ->using_max_tokens( 4000 );
 
         if ( ! empty( $history_messages ) ) {
@@ -109,7 +279,7 @@ class AiClient {
         $messages[] = array( 'role' => 'user', 'content' => $user_message );
 
         $body = array(
-            'model'      => self::CLAUDE_MODEL,
+            'model'      => $this->get_model( 'claude' ),
             'max_tokens' => 4000,
             'system'     => $system_prompt,
             'messages'   => $messages,
@@ -158,7 +328,7 @@ class AiClient {
         $messages[] = array( 'role' => 'user', 'content' => $user_message );
 
         $body = array(
-            'model'      => self::OPENAI_MODEL,
+            'model'      => $this->get_model( 'openai' ),
             'messages'   => $messages,
             'max_tokens' => 4000,
         );
@@ -210,7 +380,7 @@ class AiClient {
             'generationConfig'   => array( 'maxOutputTokens' => 4000 ),
         );
 
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . self::GEMINI_MODEL . ':generateContent?key=' . $api_key;
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $this->get_model( 'gemini' ) . ':generateContent?key=' . $api_key;
 
         $response = wp_remote_post( $url, array(
             'headers' => array( 'Content-Type' => 'application/json' ),

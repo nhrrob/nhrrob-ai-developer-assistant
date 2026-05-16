@@ -24,5 +24,8 @@ delete_option('nhrada_ai_provider');
 delete_option('nhrada_claude_api_key');
 delete_option('nhrada_openai_api_key');
 delete_option('nhrada_gemini_api_key');
+delete_option('nhrada_claude_model');
+delete_option('nhrada_openai_model');
+delete_option('nhrada_gemini_model');
 delete_option('nhrada_debug_mode');
 delete_option('nhrada_custom_js');

@@ -63,6 +63,12 @@ class Api {
             'callback'            => array( $this, 'clear_history' ),
             'permission_callback' => array( $this, 'check_permission' ),
         ) );
+
+        register_rest_route( $ns, '/models', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'get_models' ),
+            'permission_callback' => array( $this, 'check_permission' ),
+        ) );
     }
 
     public function check_permission() {
@@ -239,6 +245,9 @@ class Api {
             'nhrada_claude_api_key'  => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
             'nhrada_openai_api_key'  => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
             'nhrada_gemini_api_key'  => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
+            'nhrada_claude_model'    => get_option( 'nhrada_claude_model', '' ),
+            'nhrada_openai_model'    => get_option( 'nhrada_openai_model', '' ),
+            'nhrada_gemini_model'    => get_option( 'nhrada_gemini_model', '' ),
             'nhrada_debug_mode'      => (bool) get_option( 'nhrada_debug_mode', false ),
             'wp_ai_client_available' => $wp_ai_available,
         ) );
@@ -257,14 +266,29 @@ class Api {
 
         if ( isset( $params['nhrada_claude_api_key'] ) && '***' !== $params['nhrada_claude_api_key'] ) {
             update_option( 'nhrada_claude_api_key', sanitize_text_field( $params['nhrada_claude_api_key'] ) );
+            delete_transient( 'nhrada_models_claude' );
         }
 
         if ( isset( $params['nhrada_openai_api_key'] ) && '***' !== $params['nhrada_openai_api_key'] ) {
             update_option( 'nhrada_openai_api_key', sanitize_text_field( $params['nhrada_openai_api_key'] ) );
+            delete_transient( 'nhrada_models_openai' );
         }
 
         if ( isset( $params['nhrada_gemini_api_key'] ) && '***' !== $params['nhrada_gemini_api_key'] ) {
             update_option( 'nhrada_gemini_api_key', sanitize_text_field( $params['nhrada_gemini_api_key'] ) );
+            delete_transient( 'nhrada_models_gemini' );
+        }
+
+        if ( isset( $params['nhrada_claude_model'] ) ) {
+            update_option( 'nhrada_claude_model', sanitize_text_field( $params['nhrada_claude_model'] ) );
+        }
+
+        if ( isset( $params['nhrada_openai_model'] ) ) {
+            update_option( 'nhrada_openai_model', sanitize_text_field( $params['nhrada_openai_model'] ) );
+        }
+
+        if ( isset( $params['nhrada_gemini_model'] ) ) {
+            update_option( 'nhrada_gemini_model', sanitize_text_field( $params['nhrada_gemini_model'] ) );
         }
 
         if ( isset( $params['nhrada_debug_mode'] ) ) {
@@ -272,6 +296,24 @@ class Api {
         }
 
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
+     * GET /models?provider=claude[&refresh=1]
+     */
+    public function get_models( WP_REST_Request $request ) {
+        $allowed  = array( 'claude', 'openai', 'gemini' );
+        $provider = sanitize_text_field( $request->get_param( 'provider' ) );
+
+        if ( ! in_array( $provider, $allowed, true ) ) {
+            return new WP_Error( 'invalid_provider', 'Invalid provider.', array( 'status' => 400 ) );
+        }
+
+        $bust   = (bool) $request->get_param( 'refresh' );
+        $client = new AiClient();
+        $models = $client->fetch_models( $provider, $bust );
+
+        return rest_ensure_response( array( 'models' => $models ) );
     }
 
     /**

@@ -19,7 +19,7 @@ class Admin {
         </svg>';
         $icon = 'data:image/svg+xml;base64,' . base64_encode( $svg );
 
-        add_menu_page(
+        $hook = add_menu_page(
             __( 'AI Developer', 'nhrrob-ai-developer-assistant' ),
             __( 'AI Developer', 'nhrrob-ai-developer-assistant' ),
             'manage_options',
@@ -28,6 +28,13 @@ class Admin {
             $icon,
             30
         );
+
+        add_action( 'admin_head-' . $hook, array( $this, 'enqueue_assets' ) );
+    }
+
+    public function enqueue_assets() {
+        wp_enqueue_script( 'nhrada-app' );
+        wp_enqueue_style( 'nhrada-app-css' );
     }
 
     public function render_app() {

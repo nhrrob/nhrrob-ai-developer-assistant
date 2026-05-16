@@ -15,7 +15,7 @@ PHP has no build step. Composer autoload is pre-generated; run `composer dump-au
 
 ### Boot Flow
 
-`nhrrob-ai-developer-assistant.php` → `Nhrada_AI_Developer_Assistant::init()` (singleton) → `plugins_loaded` → `init_plugin()` → instantiates `Assets` (always), `Admin` (admin only), `Api` (always), then `require_once`s `wp-content/nhrada-snippets.php` if it exists. `Assets` handles both admin script enqueuing and frontend custom JS output via `wp_footer`.
+`nhrrob-ai-developer-assistant.php` → `Nhrada_AI_Developer_Assistant::init()` (singleton) → `plugins_loaded` → `init_plugin()` → instantiates `Assets` (always), `Admin` (admin only), `Api` (always), then `require_once`s `wp-content/nhrada-snippets.php` if it exists. `Assets` registers admin scripts/styles on `admin_enqueue_scripts` and outputs frontend custom JS via `wp_footer`; actual enqueuing of the admin React app happens in `Admin` via `admin_head-{hook}`.
 
 ### Request Flow (the core loop)
 
@@ -35,7 +35,23 @@ User message (React UI)
 2. **BYOK** — user-supplied key for the selected provider (`nhrada_ai_provider`: `claude`, `openai`, `gemini`)
 3. **Error** — clear message asking the user to configure a provider
 
-The native WP client uses `using_model_preference(CLAUDE_MODEL, OPENAI_MODEL, GEMINI_MODEL)` — preferences only, never hardcode a required provider.
+The native WP client uses `using_model_preference()` with the resolved model IDs — preferences only, WP routes to whatever the host has configured.
+
+### Model Selection
+
+Each provider has a hardcoded default (class constants) and a user-overridable WP option:
+
+| Provider | Default constant | Option key |
+|---|---|---|
+| Claude | `claude-sonnet-4-6` | `nhrada_claude_model` |
+| OpenAI | `gpt-4o-mini` | `nhrada_openai_model` |
+| Gemini | `gemini-2.0-flash` | `nhrada_gemini_model` |
+
+`get_model($provider)` reads the option; falls back to the constant if blank.
+
+`fetch_models($provider, $bust)` fetches the live model list from the provider's API using the stored key, caches the result in a WP transient (`nhrada_models_{provider}`, 24h TTL), and falls back to a built-in static list if no key is saved or the fetch fails. The transient is deleted automatically when a new API key is saved. The Settings UI shows a `<select>` populated from `GET /nhrada/v1/models?provider=…` with a Refresh button (`?refresh=1`) to bypass the cache.
+
+Static fallbacks (shown when no key is saved): Claude Opus 4.7 / Sonnet 4.7 / Sonnet 4.6 / Haiku 4.5 · GPT-4o / 4o-mini / o1 / o1-mini · Gemini 2.5 Pro / 2.0 Flash / 1.5 Pro / 1.5 Flash.
 
 ### AI Response Contract
 
@@ -80,7 +96,7 @@ Status values for change rows: `applied`, `undone`.
 
 ### Free Plugin
 
-This is a free plugin with no usage limits, no licence keys, and no SaaS backend. `Licence.php` exists as an empty stub only. Do not add paid-tier gating, upgrade prompts, or external proxy calls — those belong in a separate Pro plugin.
+This is a free plugin with no usage limits, no licence keys, and no SaaS backend. Do not add paid-tier gating, upgrade prompts, or external proxy calls — those belong in a separate Pro plugin.
 
 ### Frontend
 
