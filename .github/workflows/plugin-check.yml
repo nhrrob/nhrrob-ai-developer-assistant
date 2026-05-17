@@ -21,6 +21,7 @@ jobs:
           build-dir: '.'
           exclude-checks: |
             plugin_review_phpcs
+          ignore-codes: |
             hidden_files
             ai_instruction_directory
             github_directory
