@@ -68,7 +68,6 @@ tests/                  export-ignore
 *.tar.gz                export-ignore
 *.zip                   export-ignore
 postcss.config.js       export-ignore
-# admin/src/              export-ignore
 
 # Project Specific
 CLAUDE.md                         export-ignore

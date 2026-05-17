@@ -157,7 +157,7 @@ This is a free plugin with no usage limits, no licence keys, and no SaaS backend
 
 ### Frontend
 
-React SPA built with `@wordpress/scripts`. Entry: `admin/src/index.js`, output: `admin/build/`. Enqueued only on the `toplevel_page_nhrada-settings` admin screen. Communicates exclusively via the `nhrada/v1` REST namespace.
+React SPA built with `@wordpress/scripts`. Entry: `admin/src/index.js`, output: `admin/build/`. Enqueued only on the `toplevel_page_nhrada-assistant` admin screen (the hook returned by `add_menu_page()` with slug `nhrada-assistant`). Communicates exclusively via the `nhrada/v1` REST namespace.
 
 ## Key Conventions
 

@@ -13,7 +13,6 @@
     --c-brand: #6366f1;
     --c-brand-dark: #4f46e5;
     --c-brand-light: #eef2ff;
-    --c-pro: #f59e0b;
     --c-text: #1e293b;
     --c-text-muted: #64748b;
     --c-text-faint: #94a3b8;
@@ -21,11 +20,8 @@
     --c-bg: #f8fafc;
     --c-surface: #ffffff;
     --c-danger: #ef4444;
-    --c-success: #22c55e;
-    --c-warning: #f59e0b;
     --radius: 12px;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
 
     display: flex;
     flex-direction: column;
@@ -792,6 +788,13 @@
 .nhrada-input-text:focus {
     border-color: var(--c-brand);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.nhrada-settings-textarea {
+    max-width: 100%;
+    resize: vertical;
+    line-height: 1.5;
+    font-family: inherit;
 }
 
 .nhrada-password-wrap {

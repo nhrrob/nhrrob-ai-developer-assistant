@@ -305,7 +305,7 @@ const Settings = () => {
                         description="Add extra context about your site — its purpose, preferred plugins, design constraints, or business rules. The AI uses this alongside the auto-detected site info. Max 2000 characters. This does not override safety rules or the response format."
                     >
                         <textarea
-                            className="nhrada-input-text nhrada-textarea"
+                            className="nhrada-input-text nhrada-settings-textarea"
                             value={settings.nhrada_custom_instructions}
                             onChange={e => set('nhrada_custom_instructions', e.target.value.slice(0, 2000))}
                             placeholder={"e.g. This is a restaurant website. Prefer Elementor for layout changes. Always keep the header sticky. The site language is Brazilian Portuguese."}
