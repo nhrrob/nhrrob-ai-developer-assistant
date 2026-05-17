@@ -1,5 +1,5 @@
 <?php
-namespace NHR\AIDeveloperAssistant;
+namespace Nhrada\AIDeveloperAssistant;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -53,46 +53,22 @@ class Context {
         }
 
         $log_file = is_string( WP_DEBUG_LOG ) ? WP_DEBUG_LOG : WP_CONTENT_DIR . '/debug.log';
-        
+
         if ( ! file_exists( $log_file ) || ! is_readable( $log_file ) ) {
             return 'No debug.log found or readable.';
         }
 
-        // Read last 10 lines efficiently
-        $lines = $this->read_last_lines( $log_file, 10 );
-        return empty($lines) ? 'No recent errors.' : implode( "\n", $lines );
-    }
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        WP_Filesystem();
+        global $wp_filesystem;
 
-    private function read_last_lines( $filepath, $lines ) {
-        $f = @fopen( $filepath, "r" );
-        if ( ! $f ) return array();
-        $cursor = -1;
-        $output = array();
-        
-        if (fseek( $f, $cursor, SEEK_END ) !== 0) {
-            fclose($f);
-            return array();
+        $contents = $wp_filesystem->get_contents( $log_file );
+        if ( false === $contents ) {
+            return 'Could not read debug log.';
         }
-        
-        $char = fgetc( $f );
-        
-        while ( $lines > 0 && fseek( $f, $cursor, SEEK_END ) === 0 ) {
-            $char = fgetc( $f );
-            if ( $char === "\n" ) {
-                $lines--;
-            }
-            $cursor--;
-        }
-        
-        while ( ! feof( $f ) ) {
-            $line = fgets( $f );
-            if ( $line ) {
-                $output[] = trim( $line );
-            }
-        }
-        fclose( $f );
-        
-        return array_filter( $output );
+
+        $lines = array_filter( array_slice( explode( "\n", trim( $contents ) ), -10 ) );
+        return empty( $lines ) ? 'No recent errors.' : implode( "\n", array_map( 'trim', $lines ) );
     }
 
     private function get_customizer_settings() {

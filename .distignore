@@ -66,11 +66,8 @@ tests
 *.sql
 *.tar.gz
 *.zip
-/src
-build
 postcss.config.js
 .wordpress-org
 
 # Project Specific
-wp-ai-developer-assistant-prd.md
 CLAUDE.md

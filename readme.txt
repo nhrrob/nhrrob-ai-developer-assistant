@@ -47,6 +47,16 @@ Your messages are sent to the AI provider you choose (WordPress AI, Anthropic, O
 = Can I undo a change? =
 Yes. Every change has an Undo button in the chat, and all changes are listed in the History tab.
 
+== Privacy ==
+
+This plugin sends data to external AI services when you use the chat feature:
+
+* **What is sent:** Your chat message, WordPress version, PHP version, active theme name and version, active plugin names and versions, whether WooCommerce is active, and any custom instructions you have saved. Your site URL and admin email are also included as context.
+* **Where it is sent:** To the AI provider you choose — Anthropic (Claude), OpenAI (ChatGPT), or Google (Gemini). If you are on WordPress 7.0+ with a WordPress AI provider configured, data is sent to that provider.
+* **No data is sent to any third party other than your chosen AI provider.**
+
+You are responsible for reviewing the privacy policy of your chosen AI provider before enabling the plugin.
+
 == Changelog ==
 
 = 1.1.0 =

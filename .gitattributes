@@ -1,10 +1,3 @@
-* text=auto
-*.php text eol=lf
-*.js text eol=lf
-*.css text eol=lf
-*.json text eol=lf
-*.md text eol=lf
-
 # System files
 .ai/                    export-ignore
 .sass-cache             export-ignore
@@ -74,10 +67,7 @@ tests/                  export-ignore
 *.sql                   export-ignore
 *.tar.gz                export-ignore
 *.zip                   export-ignore
-/src/                   export-ignore
-build/                  export-ignore
 postcss.config.js       export-ignore
 
 # Project Specific
-wp-ai-developer-assistant-prd.md export-ignore
 CLAUDE.md                         export-ignore

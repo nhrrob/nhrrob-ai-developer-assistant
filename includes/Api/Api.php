@@ -1,10 +1,10 @@
 <?php
-namespace NHR\AIDeveloperAssistant\Api;
+namespace Nhrada\AIDeveloperAssistant\Api;
 
-use NHR\AIDeveloperAssistant\Context;
-use NHR\AIDeveloperAssistant\AiClient;
-use NHR\AIDeveloperAssistant\Executor;
-use NHR\AIDeveloperAssistant\Undo;
+use Nhrada\AIDeveloperAssistant\Context;
+use Nhrada\AIDeveloperAssistant\AiClient;
+use Nhrada\AIDeveloperAssistant\Executor;
+use Nhrada\AIDeveloperAssistant\Undo;
 use WP_REST_Request;
 use WP_Error;
 
@@ -63,6 +63,12 @@ class Api {
             'callback'            => array( $this, 'clear_history' ),
             'permission_callback' => array( $this, 'check_permission' ),
         ) );
+
+        register_rest_route( $ns, '/models', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'get_models' ),
+            'permission_callback' => array( $this, 'check_permission' ),
+        ) );
     }
 
     public function check_permission() {
@@ -75,9 +81,11 @@ class Api {
     public function get_messages( WP_REST_Request $request ) {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->get_results(
             "SELECT id, role, content, change_id, created_at
-             FROM {$wpdb->prefix}nhrada_messages
+             FROM {$wpdb->prefix}nhrada_log
+             WHERE record_type = 'message'
              ORDER BY id DESC
              LIMIT 50",
             ARRAY_A
@@ -106,20 +114,24 @@ class Api {
         }
 
         // Log the user message
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert(
-            $wpdb->prefix . 'nhrada_messages',
+            $wpdb->prefix . 'nhrada_log',
             array(
-                'role'       => 'user',
-                'content'    => $message,
-                'created_at' => current_time( 'mysql' ),
+                'record_type' => 'message',
+                'role'        => 'user',
+                'content'     => $message,
+                'created_at'  => current_time( 'mysql' ),
             ),
-            array( '%s', '%s', '%s' )
+            array( '%s', '%s', '%s', '%s' )
         );
 
         // Build conversation history for context (last 10 messages)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $history_rows = $wpdb->get_results(
             "SELECT role, content
-             FROM {$wpdb->prefix}nhrada_messages
+             FROM {$wpdb->prefix}nhrada_log
+             WHERE record_type = 'message'
              ORDER BY id DESC
              LIMIT 11",
             ARRAY_A
@@ -160,18 +172,20 @@ class Api {
 
         // Log assistant response
         $assistant_data   = array(
-            'role'       => 'assistant',
-            'content'    => $display_msg,
-            'created_at' => current_time( 'mysql' ),
+            'record_type' => 'message',
+            'role'        => 'assistant',
+            'content'     => $display_msg,
+            'created_at'  => current_time( 'mysql' ),
         );
-        $assistant_format = array( '%s', '%s', '%s' );
+        $assistant_format = array( '%s', '%s', '%s', '%s' );
 
         if ( is_numeric( $change_id ) ) {
             $assistant_data['change_id'] = (int) $change_id;
             $assistant_format[]          = '%d';
         }
 
-        $wpdb->insert( $wpdb->prefix . 'nhrada_messages', $assistant_data, $assistant_format );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+        $wpdb->insert( $wpdb->prefix . 'nhrada_log', $assistant_data, $assistant_format );
 
         $change_type = isset( $ai_response['change_type'] ) ? $ai_response['change_type'] : 'none';
 
@@ -216,8 +230,9 @@ class Api {
      */
     public function get_history( WP_REST_Request $request ) {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $results = $wpdb->get_results(
-            "SELECT * FROM {$wpdb->prefix}nhrada_changes ORDER BY created_at DESC LIMIT 100",
+            "SELECT * FROM {$wpdb->prefix}nhrada_log WHERE record_type = 'change' ORDER BY created_at DESC LIMIT 100",
             ARRAY_A
         );
         return rest_ensure_response( $results );
@@ -230,13 +245,19 @@ class Api {
         $wp_ai_available = function_exists( 'wp_supports_ai' ) && wp_supports_ai()
             && wp_ai_client_prompt()->is_supported_for_text_generation();
 
+        $settings = get_option( 'nhrada_settings', array() );
+
         return rest_ensure_response( array(
-            'nhrada_ai_provider'     => get_option( 'nhrada_ai_provider', 'claude' ),
-            'nhrada_claude_api_key'  => get_option( 'nhrada_claude_api_key', '' ) ? '***' : '',
-            'nhrada_openai_api_key'  => get_option( 'nhrada_openai_api_key', '' ) ? '***' : '',
-            'nhrada_gemini_api_key'  => get_option( 'nhrada_gemini_api_key', '' ) ? '***' : '',
-            'nhrada_debug_mode'      => (bool) get_option( 'nhrada_debug_mode', false ),
-            'wp_ai_client_available' => $wp_ai_available,
+            'nhrada_ai_provider'         => isset( $settings['ai_provider'] ) ? $settings['ai_provider'] : 'claude',
+            'nhrada_claude_api_key'      => ! empty( $settings['claude_api_key'] ) ? '***' : '',
+            'nhrada_openai_api_key'      => ! empty( $settings['openai_api_key'] ) ? '***' : '',
+            'nhrada_gemini_api_key'      => ! empty( $settings['gemini_api_key'] ) ? '***' : '',
+            'nhrada_claude_model'        => isset( $settings['claude_model'] ) ? $settings['claude_model'] : '',
+            'nhrada_openai_model'        => isset( $settings['openai_model'] ) ? $settings['openai_model'] : '',
+            'nhrada_gemini_model'        => isset( $settings['gemini_model'] ) ? $settings['gemini_model'] : '',
+            'nhrada_custom_instructions' => isset( $settings['custom_instructions'] ) ? $settings['custom_instructions'] : '',
+            'nhrada_debug_mode'          => ! empty( $settings['debug_mode'] ),
+            'wp_ai_client_available'     => $wp_ai_available,
         ) );
     }
 
@@ -244,30 +265,57 @@ class Api {
      * POST /settings
      */
     public function save_settings( WP_REST_Request $request ) {
-        $params = $request->get_json_params();
+        $params   = $request->get_json_params();
+        $settings = get_option( 'nhrada_settings', array() );
 
         $allowed_providers = array( 'claude', 'openai', 'gemini' );
         if ( isset( $params['nhrada_ai_provider'] ) && in_array( $params['nhrada_ai_provider'], $allowed_providers, true ) ) {
-            update_option( 'nhrada_ai_provider', $params['nhrada_ai_provider'] );
+            $settings['ai_provider'] = $params['nhrada_ai_provider'];
         }
 
-        if ( isset( $params['nhrada_claude_api_key'] ) && '***' !== $params['nhrada_claude_api_key'] ) {
-            update_option( 'nhrada_claude_api_key', sanitize_text_field( $params['nhrada_claude_api_key'] ) );
+        foreach ( $allowed_providers as $provider ) {
+            $key = 'nhrada_' . $provider . '_api_key';
+            if ( isset( $params[ $key ] ) && '***' !== $params[ $key ] ) {
+                $settings[ $provider . '_api_key' ] = sanitize_text_field( $params[ $key ] );
+                delete_transient( 'nhrada_models_' . $provider );
+            }
+
+            $model_key = 'nhrada_' . $provider . '_model';
+            if ( isset( $params[ $model_key ] ) ) {
+                $settings[ $provider . '_model' ] = sanitize_text_field( $params[ $model_key ] );
+            }
         }
 
-        if ( isset( $params['nhrada_openai_api_key'] ) && '***' !== $params['nhrada_openai_api_key'] ) {
-            update_option( 'nhrada_openai_api_key', sanitize_text_field( $params['nhrada_openai_api_key'] ) );
-        }
-
-        if ( isset( $params['nhrada_gemini_api_key'] ) && '***' !== $params['nhrada_gemini_api_key'] ) {
-            update_option( 'nhrada_gemini_api_key', sanitize_text_field( $params['nhrada_gemini_api_key'] ) );
+        if ( isset( $params['nhrada_custom_instructions'] ) ) {
+            $instructions                  = sanitize_textarea_field( $params['nhrada_custom_instructions'] );
+            $settings['custom_instructions'] = substr( $instructions, 0, 2000 );
         }
 
         if ( isset( $params['nhrada_debug_mode'] ) ) {
-            update_option( 'nhrada_debug_mode', (bool) $params['nhrada_debug_mode'] );
+            $settings['debug_mode'] = (bool) $params['nhrada_debug_mode'];
         }
 
+        update_option( 'nhrada_settings', $settings );
+
         return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
+     * GET /models?provider=claude[&refresh=1]
+     */
+    public function get_models( WP_REST_Request $request ) {
+        $allowed  = array( 'claude', 'openai', 'gemini' );
+        $provider = sanitize_text_field( $request->get_param( 'provider' ) );
+
+        if ( ! in_array( $provider, $allowed, true ) ) {
+            return new WP_Error( 'invalid_provider', 'Invalid provider.', array( 'status' => 400 ) );
+        }
+
+        $bust    = (bool) $request->get_param( 'refresh' );
+        $fetcher = new \Nhrada\AIDeveloperAssistant\ModelFetcher();
+        $models  = $fetcher->fetch( $provider, $bust );
+
+        return rest_ensure_response( array( 'models' => $models ) );
     }
 
     /**
@@ -275,7 +323,8 @@ class Api {
      */
     public function clear_history( WP_REST_Request $request ) {
         global $wpdb;
-        $wpdb->query( "DELETE FROM {$wpdb->prefix}nhrada_messages" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->query( "DELETE FROM {$wpdb->prefix}nhrada_log WHERE record_type = 'message'" );
         return rest_ensure_response( array( 'success' => true ) );
     }
 
